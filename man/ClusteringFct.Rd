@@ -10,7 +10,41 @@ with  statistically homogeneous signals at a level 'fp.alpha'}
   \item{fp.proc}{a character either "bonferroni" or "fdr" indicating which method to use for the multitest H0
 "fdr" method is not implemented yet}
 }
+\details{As for the denoising procedure, the classes are built such that within each class
 
+the clustered signals are statistically coherent. The clustering procedure is a recursive
+
+algorithm, and the main loop of which can be decomposed into the following steps:
+
+- the list of all the pixels, Lv, is ordered by increasing neighborhood sizes;
+
+- a class is defined from a single pixel: at step 1, the class is defined using
+
+the first pixel of Lv. The coherence between the signal in the current pixel and
+
+all other pixels in Lv is statistically tested. The pixels for which the null hypothesis
+
+was not rejected are removed from Lv and included in the current cluster. The estimated
+
+signal of the cluster is computed as the averaged signal over all the pixels of the cluster.
+
+- the estimated signal of the new class is statistically tested for coherence with the
+
+estimated signal of all other existing clusters;
+
+- statistically coherent clusters are merged.
+
+The algorithm stops when Lv is empty and when the clusters cannot be merged anymore.
+
+The number of clusters could be decreased by tuning the level alpha or the variance
+
+during the denoising procedure.
+
+However, by tuning one of these parameters, users expose themselves to the risk of 
+
+obtaining under or over-smoothed estimated signals in the clusters.
+
+Details about the statistical test for coherence can be found in the references.}
 \value{returns a list containing:
 - 'details' a list containing for each cluster a list of 3 objects:
 * Ic a matrix of dimension time x cluster containing the signal in each cluster
@@ -18,7 +52,13 @@ with  statistically homogeneous signals at a level 'fp.alpha'}
 * lpix a list containing the indexes of the pixels present in each cluster (as vectors)
 - 'clust3D' an array containing the clustered version of the dataset
 - 'clustmap' a matrix indicating using their creation index the location of each cluster}
+\references{Rozenholc, Y. and Reiss, M. (2012) _Preserving time structures while denoising a dynamical image_,
 
+Mathematical Methods for Signal and Image Analysis and Representation (Chapter 12), 
+
+Florack, L. and Duits, R. and Jongbloed, G. and van~Lieshout, M.-C. and Davies, L.
+
+Ed., Springer-Verlag, Berlin}
 \author{Yves Rozenholc, Christophe Pouzat, Tiffany Lieury}
 
 

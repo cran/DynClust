@@ -9,6 +9,28 @@ fp.alpha=.05,
 fp.proc="bonferroni"         
 ### a character either "bonferroni" or "fdr" indicating which method to use for the multitest H0
 ### "fdr" method is not implemented yet
+##details<< As for the denoising procedure, the classes are built such that within each class
+##details<< the clustered signals are statistically coherent. The clustering procedure is a recursive
+##details<< algorithm, and the main loop of which can be decomposed into the following steps:
+##details<< - the list of all the pixels, Lv, is ordered by increasing neighborhood sizes;
+##details<< - a class is defined from a single pixel: at step 1, the class is defined using
+##details<< the first pixel of Lv. The coherence between the signal in the current pixel and
+##details<< all other pixels in Lv is statistically tested. The pixels for which the null hypothesis
+##details<< was not rejected are removed from Lv and included in the current cluster. The estimated
+##details<< signal of the cluster is computed as the averaged signal over all the pixels of the cluster.
+##details<< - the estimated signal of the new class is statistically tested for coherence with the
+##details<< estimated signal of all other existing clusters;
+##details<< - statistically coherent clusters are merged.
+##details<< The algorithm stops when Lv is empty and when the clusters cannot be merged anymore.
+##details<< The number of clusters could be decreased by tuning the level alpha or the variance
+##details<< during the denoising procedure.
+##details<< However, by tuning one of these parameters, users expose themselves to the risk of 
+##details<< obtaining under or over-smoothed estimated signals in the clusters.
+##details<< Details about the statistical test for coherence can be found in the references.
+##references<< Rozenholc, Y. and Reiss, M. (2012) _Preserving time structures while denoising a dynamical image_,
+##references<< Mathematical Methods for Signal and Image Analysis and Representation (Chapter 12), 
+##references<< Florack, L. and Duits, R. and Jongbloed, G. and van~Lieshout, M.-C. and Davies, L.
+##references<< Ed., Springer-Verlag, Berlin
 ){
   #computes the sizes of every pixels x time neighboorhood
   fp.res.denois         <- fp.res.listdenois$details

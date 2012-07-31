@@ -5,7 +5,8 @@ structure(function
 ### as well as a list for which each element contains a list with the pixel index,
 ### the indexes of its neighboors, the resulting denoised signal, and the variance of the denoised signal   
 (fp.data.array,         
-### an 3D array corresponding to the dataset (the third dimension is the time) 
+### an 3D array corresponding to the dataset (the third dimension is the time).
+### The number of observations n must be of the form n=2^d
 fp.stab.var,           
 ### a numeric or array indicating the variance of the dataset
 fp.alpha=.05,       
@@ -13,6 +14,36 @@ fp.alpha=.05,
 fp.proc="bonferroni"         
 ### a character either "bonferroni" or "fdr" indicating which method to use for the multitest H0
 ### "fdr" method is not implemented yet 
+##details<< The denoising procedure is applied on each signal. Given a pixel at location x, 
+##details<< the difference 3D data-array is constructed by subtracting the signal at location x, Fx,
+##details<< from all the other signals of the data set. The time-homogeneity is statistically tested
+##details<< for each difference signal at a level alpha. The locations of the pixels for which the null
+##details<< hypothesis was not rejected are saved, and will be listed as neighbors of the pixel x.
+##details<< These neighbors are then used to construct a denoised estimation of Fx by averaging the
+##details<< closest (in space) time-homogeneous signals selected among all the listed neighbors.
+##details<< Since it is expected that the closer a neighbor is from the current pixel, the most likely
+##details<< their signals will be coherent, neighbors are ordered by proximity to the current pixel.
+##details<< Several estimations of the denoised Fx are constructed by averaging the signals of an
+##details<< increasing number of neighbors. The size of the neighborhood is increasing geometrically
+##details<< to optimize the computational costs while still obtaining estimates achieving a good statistical
+##details<< trade-off between bias and variance in step.
+##details<< The estimation of the denoised Fx using the largest neighborhood size (hence the highest denoising level),
+##details<< is then compared to all other estimations. If all the estimations are statistically coherent with each other,
+##details<< the estimation of the denoised signal located at pixel x using the largest neighborhood size becomes
+##details<< the final denoised Fx. However, if at least one of the estimations is not statistically coherent with
+##details<< the one having the largest neighborhood size, the estimation of the denoised signal located at pixel x
+##details<< using the largest neighborhood size is eliminated from the possible estimations.
+##details<< The process is repeated until all estimates are statistically close to the estimation
+##details<< computed with the largest neighborhood size.
+##details<< The number of clusters could be decreased by tuning the level alpha or the variance
+##details<< during the denoising procedure.
+##details<< However, by tuning one of these parameters, users expose themselves to the risk of 
+##details<< obtaining under or over-smoothed estimated signals in the clusters. 
+##details<< Details about the denoising method and the statistical test for coherence can be found in the references.
+##references<< Rozenholc, Y. and Reiss, M. (2012) _Preserving time structures while denoising a dynamical image_,
+##references<< Mathematical Methods for Signal and Image Analysis and Representation (Chapter 12), 
+##references<< Florack, L. and Duits, R. and Jongbloed, G. and van~Lieshout, M.-C. and Davies, L.
+##references<< Ed., Springer-Verlag, Berlin
 ){
   fp.n  <- dim(fp.data.array)[3] 
   if(log2(fp.n) != round(log2(fp.n))){stop("the time dimension is not of the form n=2^d => log2(n) is not an integer")}
