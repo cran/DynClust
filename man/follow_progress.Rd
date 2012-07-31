@@ -17,14 +17,14 @@ per default (when fp.prog=NULL) fp.prog = seq(0,100,by=fp.step)}
 
 \value{returns an updated version of fp.prog}
 
-\author{Yves Rozenholc, Christophe Pouzat, Tiffany Lieury}
+\author{Tiffany Lieury,Christophe Pouzat, Yves Rozenholc}
 
 
 
 
 \examples{
-# ratiobars  <-  follow_progress()
-#  for(i in 1:5000) ratiobars  <-  follow_progress(i,5000,ratiobars) 
+ratiobars  <-  follow_progress()
+ for(i in 1:5000) ratiobars  <-  follow_progress(i,5000,ratiobars)
 }
 
 \keyword{internal}

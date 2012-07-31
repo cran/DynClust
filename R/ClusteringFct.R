@@ -34,7 +34,6 @@ fp.proc="bonferroni"
 ){
   #computes the sizes of every pixels x time neighboorhood
   fp.res.denois         <- fp.res.listdenois$details
-  fp.dimarray           <- dim(fp.res.listdenois$denois3D)
   fp.neighlen           <- sapply(fp.res.denois,function(fp.idx) length(fp.res.denois$Vx))
   #orders the sizes in a decreasing order will become the list of pixel x time to clust
   fp.neighlen.sort.idx  <- sort(fp.neighlen,decreasing=T,index.return=T)$ix
@@ -44,11 +43,9 @@ fp.proc="bonferroni"
   fp.res.clust          <- fp.ClusteringInnerFct(fp.neighlen.sort.idx[1],0,NULL,fp.neighlen.sort.idx)
   #while the list of pixels x time to clust is not empty do
   fp.ncolmat          <- length(fp.res.clust$pixtoclust)
-  fp.prog             <- follow_progress(fp.idx.curr=fp.ncolmat,fp.max.iter=fp.ncolmat,fp.prog=seq(0,100,by=1))
   while(length(fp.res.clust$pixtoclust)>0){
     #continues the clustering updating at each step the list of pixel x time to clust, and choosing the next pixel x time to clust
     fp.res.clust  <- fp.ClusteringInnerFct(fp.res.clust$pixtoclust[1],fp.res.clust$lastchange,fp.res.clust$clusters,fp.res.clust$pixtoclust)
-    fp.prog       <- follow_progress(length(fp.res.clust$pixtoclust),fp.ncolmat,fp.prog)
   }
   
   #sorts the cluster by their neighboorhood size in the decreasing order
@@ -57,25 +54,31 @@ fp.proc="bonferroni"
   fp.res.clust$clusters$Ic      <- fp.res.clust$clusters$Ic[,fp.order,drop=F]
   fp.res.clust$clusters$varc    <- fp.res.clust$clusters$varc[,fp.order,drop=F]
   
+  fp.dim              <- dim(fp.res.listdenois$denois3D)
+  fp.nx               <- fp.dim[1]
+  fp.ny               <- fp.dim[2]
+  fp.n                <- fp.dim[length(fp.dim)]
+  fp.nz               <- ifelse(length(fp.dim)==4,fp.dim[3],1)
+  if(fp.nz==1) dim(fp.res.listdenois$denois3D) <- fp.dim <- c(fp.nx,fp.ny,1,fp.n)
   #constructs a 3D data array with the clustered signals
-  fp.clust.mat       <- matrix(NA,nrow=fp.dimarray[3],ncol=fp.dimarray[1]*fp.dimarray[2])
-  for(ii in 1:length(fp.res.clust$cluster$lpix))
-    fp.clust.mat[,fp.res.clust$clusters$lpix[[ii]]]  <- fp.res.clust$clusters$Ic[,ii]
-  fp.clust.array    <- array(t(fp.clust.mat),dim=fp.dimarray)
-  
-    
+  fp.clust.array      <- array(NA,dim=fp.dim)
   #constructs a 3D data array with the variance of the clustered signals
-  fp.clust.mat       <- matrix(NA,nrow=fp.dimarray[3],ncol=fp.dimarray[1]*fp.dimarray[2])
-  for(ii in 1:length(fp.res.clust$cluster$lpix))
-    fp.clust.mat[,fp.res.clust$clusters$lpix[[ii]]]  <- fp.res.clust$clusters$varc[,ii]
-  fp.clust.array.var  <- array(t(fp.clust.mat),dim=fp.dimarray)
-
+  fp.clust.array.var  <- array(NA,dim=fp.dim)
   #constructs a map of the location of the clusters
-  fp.img.clust <- rep(NA,fp.dimarray[1]*fp.dimarray[2])
-  for(ii in 1:length(fp.res.clust$cluster$lpix)){
-    fp.img.clust[fp.res.clust$clusters$lpix[[ii]]]  <- ii}
-  fp.img.clust <- matrix(fp.img.clust,fp.dimarray[1],fp.dimarray[2])
+  fp.img.clust        <- array(NA,dim=fp.dim[-length(fp.dim)])
   
+  fp.data.coord       <- cbind(x=rep(1:fp.nx,len=fp.nx*fp.ny*fp.nz),y=rep(rep(1:fp.ny,each=fp.nx),len=fp.nx*fp.ny*fp.nz),z=rep(rep(1:fp.nz,each=fp.ny*fp.nx),len=fp.nx*fp.ny*fp.nz))
+  for(fp.ii in 1:length(fp.res.clust$cluster$lpix)){
+    fp.xyz                                                <- fp.data.coord[fp.res.clust$clusters$lpix[[fp.ii]],,drop=F]
+    for(fp.subi in 1:nrow(fp.xyz)){
+      fp.clust.array[fp.xyz[fp.subi,1],fp.xyz[fp.subi,2],fp.xyz[fp.subi,3],]  <- fp.res.clust$clusters$Ic[,fp.ii]
+      fp.clust.array.var[fp.xyz[fp.subi,1],fp.xyz[,2],fp.xyz[fp.subi,3],]     <- fp.res.clust$clusters$varc[,fp.ii]
+      fp.img.clust[fp.xyz[fp.subi,1],fp.xyz[fp.subi,2],fp.xyz[fp.subi,3]]     <- fp.ii}}
+  
+  if(fp.nz==1){
+    dim(fp.clust.array) <- dim(fp.clust.array.var) <- c(fp.nx,fp.ny,fp.n)
+    dim(fp.img.clust)   <- c(fp.nx,fp.ny)}
+    
   return(list(details=fp.res.clust$clusters,clust3D=fp.clust.array,clust3Dvar=fp.clust.array.var,clustmap=fp.img.clust))
   ### returns a list containing:
   ### - 'details' a list containing for each cluster a list of 3 objects:
@@ -85,6 +88,7 @@ fp.proc="bonferroni"
   ### - 'clust3D' an array containing the clustered version of the dataset
   ### - 'clustmap' a matrix indicating using their creation index the location of each cluster
 }, ex = function(){
+## Not run:
 # library(DynClust)
 # data("adu340_4small",package="DynClust")
 # #gain of the CCD camera
@@ -96,9 +100,9 @@ fp.proc="bonferroni"
 # #dataset's variance
 # FT_varhat     <- G*adu340_4small+G^2*sro2
 # #launches the denoising step on the dataset with a statistical level of 5%
-# denoisres     <- callDenoiseVoxel(adu340_4small,FT_varhat,.05,"bonferroni")
+# denoisres     <- callDenoiseVoxel(adu340_4small,FT_varhat)
 # #launches the clustering step on the dataset with a statistical level of 5%
-# clustres      <- ClusteringFct(denoisres,.05)
+# clustres      <- ClusteringFct(denoisres)
 # x11()
 # matplot(clustres$details$Ic,t="l",lty=1,lwd=2,bty="n")
 # x11()
@@ -107,4 +111,5 @@ fp.proc="bonferroni"
 # x11()
 # par(mar=rep(0,4))
 # image(apply(adu340_4small,1:2,mean),col=grey(seq(0,1,len=2^8)))
+## End(Not run)
 })

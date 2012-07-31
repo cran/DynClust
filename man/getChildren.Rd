@@ -14,7 +14,7 @@ which are still inside the list of pixels x time left to clust.}
 \value{returns a vector containing the indexes of all the direct and indirect neighboors of the pixel x time at index fp.idx.cur.pix
 which are still inside the list of pixels x time left to clust}
 
-\author{Yves Rozenholc, Christophe Pouzat, Tiffany Lieury}
+\author{Tiffany Lieury,Christophe Pouzat, Yves Rozenholc}
 
 
 

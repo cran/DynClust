@@ -7,14 +7,14 @@
 \tabular{ll}{Package: \tab DynClust\cr
 Type: \tab Package\cr
 Title: \tab non-parametric denoising and clustering method of noisy images both indexed by time and space\cr
-Version: \tab 1.1\cr
+Version: \tab 1.2\cr
 Date: \tab 2012-07-31\cr
-Author: \tab Yves Rozenholc, Christophe Pouzat, Tiffany Lieury\cr
+Author: \tab Tiffany Lieury,Christophe Pouzat, Yves Rozenholc\cr
 Maintainer: \tab Tiffany Lieury <lieuryt-dynclust@yahoo.fr>\cr
 Depends: \tab R (>= 2.10)\cr
 License: \tab GPL (>=2)\cr}
 }
-\author{Yves Rozenholc, Christophe Pouzat, Tiffany Lieury}
+\author{Tiffany Lieury,Christophe Pouzat, Yves Rozenholc}
 
 \keyword{ package }
 

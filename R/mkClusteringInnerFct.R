@@ -36,9 +36,8 @@ fp.proc="bonferroni"
         fp.vardx      <- fp.res.denois[[fp.idx.cur.pix]]$varx
         fp.newvar     <- fp.vardm+fp.vardx   
         #tests the coherence between the denoised signal at x, and the denoised signals proposed as potential neighboors 
-        fp.rt      <- MultiTestH0(fp.Idm-fp.Idx,fp.newvar,fp.alpha,fp.proc)
         #eliminates the pixels x time that are not coherent with x
-        fp.newcluster <- fp.newcluster[which(fp.rt==1)]
+        fp.newcluster <- fp.newcluster[MultiTestH0(fp.Idm-fp.Idx,fp.newvar,fp.alpha,fp.proc)]
         #one cluster has been created, the size of the cluster list is incremented
         fp.lastchange <- length(fp.clust.list$lpix)+1
       }else{

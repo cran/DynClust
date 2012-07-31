@@ -36,10 +36,8 @@ fp.proc="bonferroni"
   fp.varlm   <- fp.clust.list$varc[,fp.lastchange]
   #computes the variances in the other clusters
   fp.varoc   <- fp.clust.listtemp$varc
-  #tests the coherence between the other clusters and the last modified cluster
-  fp.rt      <- MultiTestH0(fp.Ioc-fp.Ilm,fp.varlm+fp.varoc,fp.alpha,fp.proc)
   #returns the indexes of the clusters that are coherent with the last modified cluster
-  fp.wrt     <- which(fp.rt==1)
+  fp.wrt     <- MultiTestH0(fp.Ioc-fp.Ilm,fp.varlm+fp.varoc,fp.alpha,fp.proc)
   #if there is at least one coherent cluster do 
   if(length(fp.wrt)!=0){
     #merges the last modified cluster with the first coherent cluster found

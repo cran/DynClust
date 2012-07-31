@@ -33,6 +33,6 @@ fp.step=1 ##<< a numeric indicating the step necessary for constructing the fp.p
   return(fp.prog)
   ### returns an updated version of fp.prog
 }, ex = function(){
-# ratiobars  <-  follow_progress()
-#  for(i in 1:5000) ratiobars  <-  follow_progress(i,5000,ratiobars) 
+ratiobars  <-  follow_progress()
+ for(i in 1:5000) ratiobars  <-  follow_progress(i,5000,ratiobars)
 })

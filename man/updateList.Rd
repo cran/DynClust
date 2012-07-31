@@ -11,7 +11,7 @@ a vector containing the indexes of the pixels left for clustering   }
 
 \value{a vector containing the indexes of the pixels left for clustering}
 
-\author{Yves Rozenholc, Christophe Pouzat, Tiffany Lieury}
+\author{Tiffany Lieury,Christophe Pouzat, Yves Rozenholc}
 
 
 

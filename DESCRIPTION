@@ -2,9 +2,9 @@ Package: DynClust
 Type: Package
 Title: non-parametric denoising and clustering method of noisy images
         both indexed by time and space
-Version: 1.1
+Version: 1.2
 Date: 2012-07-31
-Author: Yves Rozenholc, Christophe Pouzat, Tiffany Lieury
+Author: Tiffany Lieury,Christophe Pouzat, Yves Rozenholc
 Maintainer: Tiffany Lieury <lieuryt-dynclust@yahoo.fr>
 Description: Two-stage method for the denoising and clustering of stack
         of noisy images acquired over time, based on the simple
@@ -30,6 +30,6 @@ Description: Two-stage method for the denoising and clustering of stack
         Go, Ubuntu Maverick 64 bits, R 2.12.1).
 Depends: R (>= 2.10)
 License: GPL (>= 2)
-Packaged: 2012-08-31 11:07:46 UTC; tiffany
+Packaged: 2012-09-21 11:44:59 UTC; tiffany
 Repository: CRAN
-Date/Publication: 2012-08-31 13:14:50
+Date/Publication: 2012-09-21 12:01:17

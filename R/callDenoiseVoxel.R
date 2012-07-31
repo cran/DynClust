@@ -7,10 +7,20 @@ structure(function
 (fp.data.array,         
 ### an 3D array corresponding to the dataset (the third dimension is the time).
 ### The number of observations n must be of the form n=2^d
-fp.stab.var,           
+fp.stab.var,          
 ### a numeric or array indicating the variance of the dataset
+fp.depth=1,
+### a numeric indicating the depth of a voxel
 fp.alpha=.05,       
 ### a numeric value indicating the level of the statistical multitest H0
+fp.mask.size=NULL,
+### a vector indicating the size (in the x and y dimension) of a circular region defined around the current pixel used to search for neighbours
+### per default fp.mask.size is defined as c(dim(fp.data.array)[1],dim(fp.data.array)[2])
+fp.mask.auto=F,
+### a boolean indicating if the size (in the x and y dimension) of a circular region defined around the current pixel used to search for neighbours
+### should grow up until the maximum amount of neighbours are found or that the x and y limits are reached
+fp.mask.step=50,
+### a numeric value indicating the x and y step for the growth of the searching area (only if fp.mask.auto=T) 
 fp.proc="bonferroni"         
 ### a character either "bonferroni" or "fdr" indicating which method to use for the multitest H0
 ### "fdr" method is not implemented yet 
@@ -45,31 +55,47 @@ fp.proc="bonferroni"
 ##references<< Florack, L. and Duits, R. and Jongbloed, G. and van~Lieshout, M.-C. and Davies, L.
 ##references<< Ed., Springer-Verlag, Berlin
 ){
-  fp.n  <- dim(fp.data.array)[3] 
+  #data dimensions
+  fp.dim              <- dim(fp.data.array)
+  #dimension variables
+  fp.nx               <- fp.dim[1]
+  fp.ny               <- fp.dim[2]
+  fp.n                <- fp.dim[length(fp.dim)]
+  fp.nz               <- ifelse(length(fp.dim)==4,fp.dim[3],1)
+  #tests can the data be analyzed
   if(log2(fp.n) != round(log2(fp.n))){stop("the time dimension is not of the form n=2^d => log2(n) is not an integer")}
   if(!is.numeric(fp.stab.var) & !is.array(fp.stab.var)){stop("fp.stab.var should be an array or a numeric")}
-  if(is.array(fp.stab.var) & !all(dim(fp.stab.var)== dim(fp.data.array))){stop("dim(fp.stab.var) and dim(fp.data.array) are different")}
-  if(is.numeric(fp.stab.var)) fp.stab.var  <- array(fp.stab.var,dim=dim(fp.data.array)) 
-
-  #transforms the 3 array into a 2D matrix with nrow = time, ncol pixels x time
-  fp.data.matrix      <- t(apply(fp.data.array,3,c))
-  #transforms fp.stab.var into the appropriate object (into a 2D matrix with nrow = time, ncol pixels x time)
-  fp.stab.var         <- t(apply(fp.stab.var,3,c))
+  if(is.array(fp.stab.var) & !all(dim(fp.stab.var)== fp.dim)){stop("dim(fp.stab.var) and dim(fp.data.array) are different")}
+  if(length(fp.dim)!=4 & length(fp.dim)!=3){stop("number of dimension must be either 3 or 4")}
+  if(is.numeric(fp.stab.var)) fp.stab.var  <- array(fp.stab.var,dim=c(fp.nx,fp.ny,fp.nz,fp.n))
+  if(length(fp.dim)==3){ dim(fp.data.array) <- fp.dim <- c(fp.nx,fp.ny,fp.nz,fp.n)}
+  if(is.null(fp.mask.size)) fp.mask.size <- c(fp.nx,fp.ny)
+  fp.mask.size[1] <- ifelse(fp.mask.size[1]>fp.nx,fp.nx,fp.mask.size[1])
+  fp.mask.size[2] <- ifelse(fp.mask.size[2]>fp.ny,fp.ny,fp.mask.size[2])
   #matrix of all the 3D coordinates at column indexes of fp.data.matrix corresponds to row indexes in fp.data.coord
-  fp.data.coord       <- cbind(x=rep(1:nrow(fp.data.array),ncol(fp.data.array)),y=rep(1:ncol(fp.data.array),each=nrow(fp.data.array)))
+  fp.data.coord       <- cbind(x=rep(1:fp.nx,len=fp.nx*fp.ny*fp.nz),y=rep(rep(1:fp.ny,each=fp.nx),len=fp.nx*fp.ny*fp.nz),z=rep(rep(1:fp.nz,each=fp.ny*fp.nx),len=fp.nx*fp.ny*fp.nz))
+  #transforms the 3 array into a 2D matrix with nrow = time, ncol pixels
+  fp.data.matrix      <- t(apply(fp.data.array,length(fp.dim),c))
+  #transforms fp.stab.var into the appropriate object (into a 2D matrix with nrow = time, ncol pixels)
+  fp.stab.var         <- t(apply(fp.stab.var,length(fp.dim),c))
+  #normalize the data (will just be used to speed the 1:1 comparison in the denoising function)  
+  fp.data.matrix.norm <- fp.data.matrix/sqrt(fp.stab.var)
   #creates the function fp.fctDenoiseVoxel and initialises parameters that will not change until the end of the analysis
-  fp.DenoiseVoxel     <- mkFCTdenoiseVoxel(fp.data.coord,fp.data.matrix,fp.stab.var,fp.alpha,fp.proc)
+  fp.DenoiseVoxel     <- mkFCTdenoiseVoxel(fp.data.coord,fp.data.matrix,fp.data.matrix.norm,fp.stab.var,fp.depth,fp.alpha,fp.mask.size,fp.mask.auto,fp.mask.step,fp.proc)
   #creates a list of size number of pixels x time, where the results will be stored
   fp.res.list         <- vector("list",ncol(fp.data.matrix))
   #for each pixel x time do
   fp.ncolmat          <- ncol(fp.data.matrix)
   fp.prog             <- follow_progress()
+  fp.denois.array     <- array(NA,dim=dim(fp.data.array))
   for(fp.idx.pix in 1:fp.ncolmat){
     #creates the function fp.fctDenoise and initialises the parameters 
-    fp.res.list[[fp.idx.pix]] <- fp.DenoiseVoxel(fp.idx.pix)
-    fp.prog                   <- follow_progress(fp.idx.curr=fp.idx.pix,fp.max.iter=fp.ncolmat,fp.prog=fp.prog)
-  }
-  fp.denois.array  <- array(t(sapply(1:length(fp.res.list),function(idx){fp.res.list[[idx]]$Ix})),dim=dim(fp.data.array))
+    fp.res.list[[fp.idx.pix]]                       <- fp.DenoiseVoxel(fp.idx.pix)
+    fp.xyz                                          <- fp.data.coord[fp.idx.pix,] 
+    fp.denois.array[fp.xyz[1],fp.xyz[2],fp.xyz[3],] <- fp.res.list[[fp.idx.pix]]$Ix
+    fp.prog                     <- follow_progress(fp.idx.curr=fp.idx.pix,fp.max.iter=fp.ncolmat,fp.prog=fp.prog)
+    }
+  if(fp.nz==1) fp.denois.array <- array(fp.denois.array,dim=c(fp.nx,fp.ny,fp.n))
   list(details=fp.res.list,denois3D=fp.denois.array)
   ### returns a list containing:
   ### 'details' a list containing for each pixel x time a list of 4 objects:
@@ -78,6 +104,7 @@ fp.proc="bonferroni"
   ### - 'varx' a vector containing the variance of the denoised signal
   ### 'denois3D' an array containing the denoised version of the dataset
 }, ex = function(){
+## Not run:
 # library(DynClust)
 # data("adu340_4small",package="DynClust")
 # #gain of the CCD camera
@@ -89,7 +116,7 @@ fp.proc="bonferroni"
 # #dataset's variance
 # FT_varhat     <- G*adu340_4small+G^2*sro2
 # #launches the denoising step on the dataset with a statistical level of 5%
-# denoisres     <- callDenoiseVoxel(adu340_4small,FT_varhat,.05,"bonferroni")
+# denoisres     <- callDenoiseVoxel(adu340_4small,FT_varhat)
 # #computes the average over time for each pixelxtime before denoising
 # avg_before    <- apply(adu340_4small,1:2,mean)
 # #computes the average over time for each pixelxtime after denoising
@@ -97,4 +124,5 @@ fp.proc="bonferroni"
 # #plotting results
 # image(1:nrow(avg_before),1:ncol(avg_before),avg_before)
 # x11();image(1:nrow(avg_after),1:ncol(avg_after),avg_after)
+## End(Not run)
 })

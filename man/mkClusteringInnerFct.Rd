@@ -18,7 +18,7 @@
 - 'lastchange' the index of the cluster last modified in the cluster list
 - 'pixtoclust' a vector containing the indexes of the pixels left for clustering    }
 
-\author{Yves Rozenholc, Christophe Pouzat, Tiffany Lieury}
+\author{Tiffany Lieury,Christophe Pouzat, Yves Rozenholc}
 
 
 

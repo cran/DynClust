@@ -59,12 +59,13 @@ Mathematical Methods for Signal and Image Analysis and Representation (Chapter 1
 Florack, L. and Duits, R. and Jongbloed, G. and van~Lieshout, M.-C. and Davies, L.
 
 Ed., Springer-Verlag, Berlin}
-\author{Yves Rozenholc, Christophe Pouzat, Tiffany Lieury}
+\author{Tiffany Lieury,Christophe Pouzat, Yves Rozenholc}
 
 
 
 
 \examples{
+## Not run:
 # library(DynClust)
 # data("adu340_4small",package="DynClust")
 # #gain of the CCD camera
@@ -76,9 +77,9 @@ Ed., Springer-Verlag, Berlin}
 # #dataset's variance
 # FT_varhat     <- G*adu340_4small+G^2*sro2
 # #launches the denoising step on the dataset with a statistical level of 5\%
-# denoisres     <- callDenoiseVoxel(adu340_4small,FT_varhat,.05,"bonferroni")
+# denoisres     <- callDenoiseVoxel(adu340_4small,FT_varhat)
 # #launches the clustering step on the dataset with a statistical level of 5\%
-# clustres      <- ClusteringFct(denoisres,.05)
+# clustres      <- ClusteringFct(denoisres)
 # x11()
 # matplot(clustres$details$Ic,t="l",lty=1,lwd=2,bty="n")
 # x11()
@@ -87,4 +88,5 @@ Ed., Springer-Verlag, Berlin}
 # x11()
 # par(mar=rep(0,4))
 # image(apply(adu340_4small,1:2,mean),col=grey(seq(0,1,len=2^8)))
+## End(Not run)
 }

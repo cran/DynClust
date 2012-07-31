@@ -25,7 +25,7 @@ If such clusters exist, the last cluster created or modified is merged with the 
 * lpix a list containing the indexes of the pixels present in each cluster (as vectors)
 - 'lastchange' the index of the cluster last modified in the cluster list }
 
-\author{Yves Rozenholc, Christophe Pouzat, Tiffany Lieury}
+\author{Tiffany Lieury,Christophe Pouzat, Yves Rozenholc}
 
 
 

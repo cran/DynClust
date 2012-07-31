@@ -14,7 +14,7 @@
 \value{returns TRUE if the test was not significant, FALSE if H1 is true (the mean is centered on 0) at a level alpha
 when 'fp.diff.matrix' is a matrix the function returns a vector of boolean values. }
 
-\author{Yves Rozenholc, Christophe Pouzat, Tiffany Lieury}
+\author{Tiffany Lieury,Christophe Pouzat, Yves Rozenholc}
 
 
 

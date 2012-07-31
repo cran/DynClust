@@ -5,13 +5,20 @@
 The function returns a list containing a denoised version of the dataset as an array,
 as well as a list for which each element contains a list with the pixel index,
 the indexes of its neighboors, the resulting denoised signal, and the variance of the denoised signal   }
-\usage{callDenoiseVoxel(fp.data.array, fp.stab.var, fp.alpha = 0.05, 
+\usage{callDenoiseVoxel(fp.data.array, fp.stab.var, fp.depth = 1, fp.alpha = 0.05, 
+    fp.mask.size = NULL, fp.mask.auto = F, fp.mask.step = 50, 
     fp.proc = "bonferroni")}
 \arguments{
   \item{fp.data.array}{an 3D array corresponding to the dataset (the third dimension is the time).
 The number of observations n must be of the form n=2^d}
   \item{fp.stab.var}{a numeric or array indicating the variance of the dataset}
+  \item{fp.depth}{a numeric indicating the depth of a voxel}
   \item{fp.alpha}{a numeric value indicating the level of the statistical multitest H0}
+  \item{fp.mask.size}{a vector indicating the size (in the x and y dimension) of a circular region defined around the current pixel used to search for neighbours
+per default fp.mask.size is defined as c(dim(fp.data.array)[1],dim(fp.data.array)[2])}
+  \item{fp.mask.auto}{a boolean indicating if the size (in the x and y dimension) of a circular region defined around the current pixel used to search for neighbours
+should grow up until the maximum amount of neighbours are found or that the x and y limits are reached}
+  \item{fp.mask.step}{a numeric value indicating the x and y step for the growth of the searching area (only if fp.mask.auto=T) }
   \item{fp.proc}{a character either "bonferroni" or "fdr" indicating which method to use for the multitest H0
 "fdr" method is not implemented yet }
 }
@@ -79,12 +86,13 @@ Mathematical Methods for Signal and Image Analysis and Representation (Chapter 1
 Florack, L. and Duits, R. and Jongbloed, G. and van~Lieshout, M.-C. and Davies, L.
 
 Ed., Springer-Verlag, Berlin}
-\author{Yves Rozenholc, Christophe Pouzat, Tiffany Lieury}
+\author{Tiffany Lieury,Christophe Pouzat, Yves Rozenholc}
 
 
 
 
 \examples{
+## Not run:
 # library(DynClust)
 # data("adu340_4small",package="DynClust")
 # #gain of the CCD camera
@@ -96,7 +104,7 @@ Ed., Springer-Verlag, Berlin}
 # #dataset's variance
 # FT_varhat     <- G*adu340_4small+G^2*sro2
 # #launches the denoising step on the dataset with a statistical level of 5\%
-# denoisres     <- callDenoiseVoxel(adu340_4small,FT_varhat,.05,"bonferroni")
+# denoisres     <- callDenoiseVoxel(adu340_4small,FT_varhat)
 # #computes the average over time for each pixelxtime before denoising
 # avg_before    <- apply(adu340_4small,1:2,mean)
 # #computes the average over time for each pixelxtime after denoising
@@ -104,4 +112,5 @@ Ed., Springer-Verlag, Berlin}
 # #plotting results
 # image(1:nrow(avg_before),1:ncol(avg_before),avg_before)
 # x11();image(1:nrow(avg_after),1:ncol(avg_after),avg_after)
+## End(Not run)
 }
