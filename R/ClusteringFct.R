@@ -34,9 +34,12 @@ fp.proc="bonferroni"
 ){
   #computes the sizes of every pixels x time neighboorhood
   fp.res.denois         <- fp.res.listdenois$details
-  fp.neighlen           <- sapply(fp.res.denois,function(fp.idx) length(fp.res.denois$Vx))
+  fp.neighlen           <- sapply(fp.res.denois,function(fp.idx) length(fp.idx$Vx))
   #orders the sizes in a decreasing order will become the list of pixel x time to clust
-  fp.neighlen.sort.idx  <- sort(fp.neighlen,decreasing=T,index.return=T)$ix
+  fp.neighlen.sort.idx  <- order(fp.neighlen,decreasing=T)
+  fp.whoisnull          <- which(fp.neighlen.sort.idx*sort(fp.neighlen,decreasing=T)==0)
+  if(length(fp.whoisnull))
+    fp.neighlen.sort.idx  <- fp.neighlen.sort.idx[-fp.whoisnull]
   #creates a function for clustering, initialises the constant variables
   fp.ClusteringInnerFct <- mkClusteringInnerFct(fp.res.denois,fp.alpha,fp.proc)
   #step 1 of the clustering, where the list of clusters = NULL

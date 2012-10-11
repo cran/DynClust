@@ -74,26 +74,33 @@ fp.proc="bonferroni"
   fp.mask.size[2] <- ifelse(fp.mask.size[2]>fp.ny,fp.ny,fp.mask.size[2])
   #matrix of all the 3D coordinates at column indexes of fp.data.matrix corresponds to row indexes in fp.data.coord
   fp.data.coord       <- cbind(x=rep(1:fp.nx,len=fp.nx*fp.ny*fp.nz),y=rep(rep(1:fp.ny,each=fp.nx),len=fp.nx*fp.ny*fp.nz),z=rep(rep(1:fp.nz,each=fp.ny*fp.nx),len=fp.nx*fp.ny*fp.nz))
-  #transforms the 3 array into a 2D matrix with nrow = time, ncol pixels
   fp.data.matrix      <- t(apply(fp.data.array,length(fp.dim),c))
-  #transforms fp.stab.var into the appropriate object (into a 2D matrix with nrow = time, ncol pixels)
   fp.stab.var         <- t(apply(fp.stab.var,length(fp.dim),c))
-  #normalize the data (will just be used to speed the 1:1 comparison in the denoising function)  
   fp.data.matrix.norm <- fp.data.matrix/sqrt(fp.stab.var)
+
+  #eliminates the NA time-sequence from the dataset
+  fp.idx.na           <- which(apply(fp.data.matrix,2,function(fp.x) any(is.na(fp.x))))
+  fp.idxtovisit       <- 1:(fp.nx*fp.ny)
+  if(length(fp.idx.na)>0) fp.idxtovisit <- fp.idxtovisit[-fp.idx.na]
+  fp.data.matrix      <- fp.data.matrix[,fp.idxtovisit]
+  fp.stab.var         <-   fp.stab.var[,fp.idxtovisit] 
+  fp.data.matrix.norm <- fp.data.matrix.norm[,fp.idxtovisit]
+  fp.data.coord       <- fp.data.coord[fp.idxtovisit,]
+
   #creates the function fp.fctDenoiseVoxel and initialises parameters that will not change until the end of the analysis
   fp.DenoiseVoxel     <- mkFCTdenoiseVoxel(fp.data.coord,fp.data.matrix,fp.data.matrix.norm,fp.stab.var,fp.depth,fp.alpha,fp.mask.size,fp.mask.auto,fp.mask.step,fp.proc)
   #creates a list of size number of pixels x time, where the results will be stored
-  fp.res.list         <- vector("list",ncol(fp.data.matrix))
+  fp.res.list         <- vector("list",fp.nx*fp.ny)
   #for each pixel x time do
-  fp.ncolmat          <- ncol(fp.data.matrix)
   fp.prog             <- follow_progress()
   fp.denois.array     <- array(NA,dim=dim(fp.data.array))
-  for(fp.idx.pix in 1:fp.ncolmat){
+  for(fp.iterator in 1:length(fp.idxtovisit)){
+    fp.idx.pix                                      <- fp.idxtovisit[fp.iterator]
+    fp.xyz                                          <- fp.data.coord[fp.iterator,]
     #creates the function fp.fctDenoise and initialises the parameters 
-    fp.res.list[[fp.idx.pix]]                       <- fp.DenoiseVoxel(fp.idx.pix)
-    fp.xyz                                          <- fp.data.coord[fp.idx.pix,] 
+    fp.res.list[[fp.idx.pix]]                       <- fp.DenoiseVoxel(fp.iterator)
     fp.denois.array[fp.xyz[1],fp.xyz[2],fp.xyz[3],] <- fp.res.list[[fp.idx.pix]]$Ix
-    fp.prog                     <- follow_progress(fp.idx.curr=fp.idx.pix,fp.max.iter=fp.ncolmat,fp.prog=fp.prog)
+    fp.prog                     <- follow_progress(fp.idx.curr=fp.iterator,fp.max.iter=length(fp.idxtovisit),fp.prog=fp.prog)
     }
   if(fp.nz==1) fp.denois.array <- array(fp.denois.array,dim=c(fp.nx,fp.ny,fp.n))
   list(details=fp.res.list,denois3D=fp.denois.array)

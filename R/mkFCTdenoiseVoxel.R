@@ -50,7 +50,7 @@ fp.proc="bonferroni"
     fp.ylim         <- abs(fp.data.coord[,2]-fp.data.coord[fp.idx.pix,2])<=fp.mask.size[2]
     #gets the indexes of the coordinates inside the mask
     fp.limits                           <- fp.xlim & fp.ylim
-    fp.limits[fp.neighb]                <- F
+    fp.limits[fp.neighb]   <- F        
     fp.mask                             <- which(fp.limits)
     #substract the signal at index fp.idx.pix from the raw data matrix (for pixels x time inside the mask)
     fp.diff.matrix  <- fp.data.matrix.norm[,fp.mask]-fp.data.matrix.norm[,fp.idx.pix]
@@ -106,8 +106,8 @@ fp.proc="bonferroni"
     fp.neighb           <- fp.neighb[-(1:fp.limits)]
     #tests the coherence between the signal in the crown at fp.myindex with all the previous Vx created (from step 2 since Vx={} at step 1), fp.alpha is divided by the number of Vx used at each step
     fp.testcoh          <- MultiTestH0(fp.Iv[,2:fp.myindex]-fp.Iw[,fp.myindex],fp.varv[,2:fp.myindex]+fp.varw[,fp.myindex],fp.alpha/(fp.myindex-1),fp.proc)
-    #if all the Vx are coherent with the current Wx then the denoising stops and returns Vx and Iv at index fp.myindex 
-    if(length(fp.testcoh)==length(2:fp.myindex)) return(list(Vx=unique(fp.V[[fp.myindex]]),Ix=fp.Iv[,fp.myindex],varx=fp.varv[,fp.myindex]))
+    #if all the Vx are not coherent with the current Wx then the denoising stops and returns Vx and Iv at index fp.myindex 
+    if(length(fp.testcoh)!=length(2:fp.myindex)) return(list(Vx=unique(fp.V[[fp.myindex]]),Ix=fp.Iv[,fp.myindex],varx=fp.varv[,fp.myindex]))
     #if there are no neighboors available then the denoising stops and returns Vx and Iv at index fp.myindex 
     if(fp.limits==0)  return(list(Vx=unique(fp.V[[fp.myindex]]),Ix=fp.Iv[,fp.myindex],varx=fp.varv[,fp.myindex]))
     #next step
