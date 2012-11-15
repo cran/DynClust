@@ -3,12 +3,11 @@
 \title{ClusteringFct}
 \description{'ClusteringFct' clusters together the denoised pixels x time
 with  statistically homogeneous signals at a level 'fp.alpha'}
-\usage{ClusteringFct(fp.res.listdenois, fp.alpha = 0.05, fp.proc = "bonferroni")}
+\usage{ClusteringFct(fp.res.denois, fp.var = 1, fp.alpha = 0.05)}
 \arguments{
-  \item{fp.res.listdenois}{a list containing the results of the denoising procedure (cf. 'callDenoiseVoxel')}
+  \item{fp.res.denois}{a list containing the results of the denoising procedure (cf. 'callDenoiseVoxel')}
+  \item{fp.var}{a numeric indicating the variance of the dataset}
   \item{fp.alpha}{a numeric value indicating the level of the statistical multitest H0}
-  \item{fp.proc}{a character either "bonferroni" or "fdr" indicating which method to use for the multitest H0
-"fdr" method is not implemented yet}
 }
 \details{As for the denoising procedure, the classes are built such that within each class
 
@@ -45,13 +44,7 @@ However, by tuning one of these parameters, users expose themselves to the risk 
 obtaining under or over-smoothed estimated signals in the clusters.
 
 Details about the statistical test for coherence can be found in the references.}
-\value{returns a list containing:
-- 'details' a list containing for each cluster a list of 3 objects:
-* Ic a matrix of dimension time x cluster containing the signal in each cluster
-* varc a matrix of dimension time x cluster containing variance of the signal in each cluster
-* lpix a list containing the indexes of the pixels present in each cluster (as vectors)
-- 'clust3D' an array containing the clustered version of the dataset
-- 'clustmap' a matrix indicating using their creation index the location of each cluster}
+\value{returns a list containing the indexes of the pixels present in each cluster (as vectors)}
 \references{Rozenholc, Y. and Reiss, M. (2012) _Preserving time structures while denoising a dynamical image_,
 
 Mathematical Methods for Signal and Image Analysis and Representation (Chapter 12), 
@@ -65,7 +58,7 @@ Ed., Springer-Verlag, Berlin}
 
 
 \examples{
-## Not run:
+# ## Not run:
 # library(DynClust)
 # data("adu340_4small",package="DynClust")
 # #gain of the CCD camera
@@ -75,19 +68,21 @@ Ed., Springer-Verlag, Berlin}
 # #readout variance
 # sro2          <- (16.4)^2
 # #dataset's variance
-# FT_varhat     <- G*adu340_4small+G^2*sro2
+# FT            <- adu340_4small
+# FT_varhat     <- G*FT+G^2*sro2
 # FT            <- FT/sqrt(FT_varhat)
 # #launches the denoising step on the dataset with a statistical level of 5\%
-# denoisres     <- callDenoiseVoxel(adu340_4small,1,fp.nproc=2)
+# denoisres     <- callDenoiseVoxel(FT,1,fp.mask.size=NULL,fp.nproc=2)
 # #launches the clustering step on the dataset with a statistical level of 5\%
-# clustres      <- ClusteringFct(denoisres)
+# clustres      <- ClusteringFct(denoisres,1)
 # x11()
-# matplot(clustres$details$Ic,t="l",lty=1,lwd=2,bty="n")
-# x11()
-# par(mar=rep(0,4))
-# image(clustres$clustmap,col=rainbow(max(clustres$clustmap)))
+# matplot(getClusterCenters(FT,denoisres,clustres),t="l",lty=1,lwd=2,bty="n")
 # x11()
 # par(mar=rep(0,4))
-# image(apply(adu340_4small,1:2,mean),col=grey(seq(0,1,len=2^8)))
-## End(Not run)
+# clustmap <- getClusterMap(dim(FT),clustres)
+# image(clustmap,col=rainbow(max(clustmap)))
+# x11()
+# par(mar=rep(0,4))
+# image(apply(FT,1:2,mean),col=grey(seq(0,1,len=2^8)))
+# ## End(Not run)
 }

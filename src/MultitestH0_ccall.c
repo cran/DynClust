@@ -11,46 +11,44 @@
  * @param *MAT a pointer to the  in R.
  * @param *NROW a pointer to the  in R.
  * @param *NCOL a pointer to the  in R.
- * @param *NBTEST a pointer to .
+ * @param *NTEST a pointer to .
  * @param *ALPHA a pointer to .
- * @param *RES a pointer to .
+ * @param *winners a pointer to .
  *
  */
-void MultiTestH0_ccall(double *MAT, int *NROW, int *NCOL,int *NBTEST,double *ALPHA,int *RES){
-  int i = 0, j = 0, taille = ((*NROW)*(*NCOL)), newnrow=(*NROW);
-  double norm2 = 0, tresh = 0;
- //while the time dimension has at least 2 observations do  
-  while(newnrow >= 2){
-    tresh   = qchisq(1-((*ALPHA)/(*NBTEST)),newnrow/2,1,0);
-    j       = 0;
-    //for each pair of observation
-    for(i=0; i<taille-1; i=i+2){
-      if(RES[j] == 1){
-        //compute the mean of the pair of observations
-        MAT[i/2]  = (MAT[i]+MAT[i+1])/2;
-        //compute the sum of the square means
-        norm2   = norm2+MAT[i/2]*MAT[i/2];
-        //if 2 times the sum of the square means is greater than the threshold increment i
-        if(norm2*2>tresh) i=(newnrow-2)+newnrow*j;     
-        //if i has reach the end of a virtual column
-        if(i==(newnrow-2)+newnrow*j){
-          if(norm2*2>tresh){
-            RES[j] = 0;
-          }
-          j++;
-          norm2=0;}
-        
-      }else{
-        i=(newnrow-2)+newnrow*j; 
-        j++;
-        norm2=0;
-      }
-      
-    }
-    taille  = taille/2;
-    newnrow = newnrow/2;
-  }
+
+
+int Winner(double *tab,int size,double thres){
+  double sum = 0;
+  for(int irow=0; irow<=(size-1);irow=irow+1){
+    sum = sum+tab[irow]*tab[irow];
+    if(2*sum>thres) return(1);
+  }    
+  return(0);
 }
+void MultiTestH0_ccall(double *MAT, int *NROW, int *NCOL, int *NTEST,double *ALPHA,int *winners){
+  int ntest = *NTEST;
+  int jcol = 0;
+  double *tab;
+  double thresh=0;
+  int size=2^ntest;
+  int sum = 0;
+  int starting = 0;
+  while(ntest>=1){
+    size    = R_pow(2,ntest);
+    thresh  = qchisq(1-((*ALPHA)/((*NTEST)+1)),size,1,0);
+    for(jcol=0;jcol<=(*NCOL-1);jcol++){
+      if(winners[jcol]==0){
+        tab             = &MAT[jcol*(*NROW)+starting];
+        winners[jcol]   = Winner(tab,size,thresh); 
+      }
+      sum = sum+winners[jcol];
+      if(sum==*NCOL) break;
+    }
+    sum      = 0;
+    starting = starting+size;
+    ntest    = ntest-1;
+  }
 
-
+}
 

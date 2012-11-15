@@ -1,4 +1,5 @@
 useDynLib(DynClust,
 MultiTestH0_ccall)
-import(parallel)
+# Import all packages listed as Imports or Depends
+ import(parallel)
 exportPattern("^[[:alpha:]]+")

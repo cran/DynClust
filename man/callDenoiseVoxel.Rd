@@ -5,23 +5,17 @@
 The function returns a list containing a denoised version of the dataset as an array,
 as well as a list for which each element contains a list with the pixel index,
 the indexes of its neighboors, the resulting denoised signal, and the variance of the denoised signal   }
-\usage{callDenoiseVoxel(fp.data.array, fp.stab.var, fp.depth = 1, fp.alpha = 0.05, 
-    fp.mask.size = NULL, fp.mask.auto = F, fp.mask.step = 50, 
-    fp.nproc = 1, fp.proc = "bonferroni")}
+\usage{callDenoiseVoxel(fp.data.array, fp.var = 1, fp.depth = 1, fp.alpha = 0.05, 
+    fp.mask.size = sqrt(dim(fp.data.array)[1:2]), fp.nproc = 1)}
 \arguments{
   \item{fp.data.array}{an 3D array corresponding to the dataset (the third dimension is the time).
 The number of observations n must be of the form n=2^d}
-  \item{fp.stab.var}{a numeric indicating the variance of the dataset}
+  \item{fp.var}{a numeric indicating the variance of the dataset}
   \item{fp.depth}{a numeric indicating the depth of a voxel}
   \item{fp.alpha}{a numeric value indicating the level of the statistical multitest H0}
-  \item{fp.mask.size}{a vector indicating the size (in the x and y dimension) of a circular region defined around the current pixel used to search for neighbours
-per default fp.mask.size is defined as c(dim(fp.data.array)[1],dim(fp.data.array)[2])}
-  \item{fp.mask.auto}{a boolean indicating if the size (in the x and y dimension) of a circular region defined around the current pixel used to search for neighbours
-should grow up until the maximum amount of neighbours are found or that the x and y limits are reached}
-  \item{fp.mask.step}{a numeric value indicating the x and y step for the growth of the searching area (only if fp.mask.auto=T),}
-  \item{fp.nproc}{a numeric value indicating the number of processors to run parallel computations,}
-  \item{fp.proc}{a character either "bonferroni" or "fdr" indicating which method to use for the multitest H0
-"fdr" method is not implemented yet }
+  \item{fp.mask.size}{a vector indicating the size (in the x and y dimension) of a rectangular region defined around the current pixel used to search for neighbours
+per default fp.mask.size = sqrt(dim(fp.data.arra)[1:2]), set it to fp.mask.size = NULL to use the whole dataset}
+  \item{fp.nproc}{a numeric value indicating the number of processors to run parallel computations}
 }
 \details{The denoising procedure is applied on each signal. Given a pixel at location x, 
 
@@ -75,11 +69,8 @@ obtaining under or over-smoothed estimated signals in the clusters.
 
 Details about the denoising method and the statistical test for coherence can be found in the references.}
 \value{returns a list containing:
-'details' a list containing for each pixel x time a list of 4 objects:
 - 'Vx' a vector containing all the indexes of the denoised pixel's neighboors
-- 'Ix' a vector containing the denoised signal
-- 'varx' a vector containing the variance of the denoised signal
-'denois3D' an array containing the denoised version of the dataset}
+- 'Ix' a vector containing the denoised signal}
 \references{Rozenholc, Y. and Reiss, M. (2012) _Preserving time structures while denoising a dynamical image_,
 
 Mathematical Methods for Signal and Image Analysis and Representation (Chapter 12), 
@@ -93,7 +84,7 @@ Ed., Springer-Verlag, Berlin}
 
 
 \examples{
-## Not run:
+# ## Not run:
 # library(DynClust)
 # data("adu340_4small",package="DynClust")
 # #gain of the CCD camera
@@ -103,16 +94,17 @@ Ed., Springer-Verlag, Berlin}
 # #readout variance
 # sro2          <- (16.4)^2
 # #dataset's variance
-# FT_varhat     <- G*adu340_4small+G^2*sro2
+# FT            <- adu340_4small
+# FT_varhat     <- G*FT+G^2*sro2
 # FT            <- FT/sqrt(FT_varhat)
 # #launches the denoising step on the dataset with a statistical level of 5\%
-# denoisres     <- callDenoiseVoxel(adu340_4small,1,fp.nproc=2)
+# denoisres     <- callDenoiseVoxel(FT,1,fp.mask.size=NULL,fp.nproc=2)
 # #computes the average over time for each pixelxtime before denoising
-# avg_before    <- apply(adu340_4small,1:2,mean)
+# avg_before    <- apply(FT,1:2,mean)
 # #computes the average over time for each pixelxtime after denoising
-# avg_after     <- apply(denoisres$denois3D,1:2,mean)
+# avg_after     <- apply(getDenoisedSet(FT,denoisres),1:2,mean)
 # #plotting results
 # image(1:nrow(avg_before),1:ncol(avg_before),avg_before)
 # x11();image(1:nrow(avg_after),1:ncol(avg_after),avg_after)
-## End(Not run)
+# ## End(Not run)
 }
