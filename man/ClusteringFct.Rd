@@ -76,8 +76,9 @@ Ed., Springer-Verlag, Berlin}
 # sro2          <- (16.4)^2
 # #dataset's variance
 # FT_varhat     <- G*adu340_4small+G^2*sro2
+# FT            <- FT/sqrt(FT_varhat)
 # #launches the denoising step on the dataset with a statistical level of 5\%
-# denoisres     <- callDenoiseVoxel(adu340_4small,FT_varhat)
+# denoisres     <- callDenoiseVoxel(adu340_4small,1,fp.nproc=2)
 # #launches the clustering step on the dataset with a statistical level of 5\%
 # clustres      <- ClusteringFct(denoisres)
 # x11()

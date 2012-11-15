@@ -46,18 +46,18 @@ fp.proc="bonferroni"
       #computes a signal to represent the average element of the class
       fp.newclustcenter <- list(lpix=fp.newcluster,
                                 Ic  =rowMeans(sapply(fp.newcluster,function(idx) fp.res.denois[[idx]]$Ix)),
-                                varc=rowMeans(sapply(fp.newcluster,function(idx) fp.res.denois[[idx]]$varx)))
+                                varc=mean(sapply(fp.newcluster,function(idx) fp.res.denois[[idx]]$varx)))
       #updates the list of pixels x time left to clust
       fp.pixtoclust     <- updateList(fp.pixtoclust,fp.newcluster)
       #if no new cluster were created do 
       if(fp.lastchange<=length(fp.clust.list$lpix)){
         #updates the cluster's signal
         fp.clust.list$Ic[,fp.lastchange]    <- fp.newclustcenter$Ic
-        fp.clust.list$varc[,fp.lastchange]  <- fp.newclustcenter$varc}
+        fp.clust.list$varc[fp.lastchange]  <- fp.newclustcenter$varc}
       else{
         #if a new cluster is created, had the new cluster's signal to matrix of clusters' signals
         fp.clust.list$Ic   <- cbind(fp.clust.list$Ic,fp.newclustcenter$Ic)
-        fp.clust.list$varc <- cbind(fp.clust.list$varc,fp.newclustcenter$varc)}
+        fp.clust.list$varc <- c(fp.clust.list$varc,fp.newclustcenter$varc)}
       #updates the list of pixels x time in the visited cluster whether it is a new cluster or not  
       fp.clust.list$lpix[[fp.lastchange]]     <- fp.newclustcenter$lpix
       #checks if the visiter cluster is or not coherent with other existing cluster, returns the cluster's index of the last change 

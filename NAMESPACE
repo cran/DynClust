@@ -1,3 +1,4 @@
 useDynLib(DynClust,
 MultiTestH0_ccall)
+import(parallel)
 exportPattern("^[[:alpha:]]+")

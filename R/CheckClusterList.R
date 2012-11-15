@@ -27,13 +27,13 @@ fp.proc="bonferroni"
   fp.clust.listtemp$Ic    <- fp.clust.listtemp$Ic[,-fp.lastchange,drop=F]
   #removes from the pixel x time lists, the pixel x time list of the last modified cluster 
   fp.clust.listtemp$lpix  <- fp.clust.listtemp$lpix[-fp.lastchange]
-  fp.clust.listtemp$varc  <- fp.clust.listtemp$varc[,-fp.lastchange,drop=F]
+  fp.clust.listtemp$varc  <- fp.clust.listtemp$varc[-fp.lastchange,drop=F]
   #computes the signal of the last modified cluster
   fp.Ilm     <- fp.clust.list$Ic[,fp.lastchange]
   #computes the matrix signals in the other clusters
   fp.Ioc     <- fp.clust.listtemp$Ic
   #computes the variance of the last modified cluster
-  fp.varlm   <- fp.clust.list$varc[,fp.lastchange]
+  fp.varlm   <- fp.clust.list$varc[fp.lastchange]
   #computes the variances in the other clusters
   fp.varoc   <- fp.clust.listtemp$varc
   #returns the indexes of the clusters that are coherent with the last modified cluster

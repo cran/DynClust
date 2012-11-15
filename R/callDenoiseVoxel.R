@@ -8,7 +8,7 @@ structure(function
 ### an 3D array corresponding to the dataset (the third dimension is the time).
 ### The number of observations n must be of the form n=2^d
 fp.stab.var,          
-### a numeric or array indicating the variance of the dataset
+### a numeric indicating the variance of the dataset
 fp.depth=1,
 ### a numeric indicating the depth of a voxel
 fp.alpha=.05,       
@@ -20,7 +20,9 @@ fp.mask.auto=F,
 ### a boolean indicating if the size (in the x and y dimension) of a circular region defined around the current pixel used to search for neighbours
 ### should grow up until the maximum amount of neighbours are found or that the x and y limits are reached
 fp.mask.step=50,
-### a numeric value indicating the x and y step for the growth of the searching area (only if fp.mask.auto=T) 
+### a numeric value indicating the x and y step for the growth of the searching area (only if fp.mask.auto=T),
+fp.nproc=1,
+### a numeric value indicating the number of processors to run parallel computations,
 fp.proc="bonferroni"         
 ### a character either "bonferroni" or "fdr" indicating which method to use for the multitest H0
 ### "fdr" method is not implemented yet 
@@ -64,10 +66,8 @@ fp.proc="bonferroni"
   fp.nz               <- ifelse(length(fp.dim)==4,fp.dim[3],1)
   #tests can the data be analyzed
   if(log2(fp.n) != round(log2(fp.n))){stop("the time dimension is not of the form n=2^d => log2(n) is not an integer")}
-  if(!is.numeric(fp.stab.var) & !is.array(fp.stab.var)){stop("fp.stab.var should be an array or a numeric")}
-  if(is.array(fp.stab.var) & !all(dim(fp.stab.var)== fp.dim)){stop("dim(fp.stab.var) and dim(fp.data.array) are different")}
+  if(!is.numeric(fp.stab.var)){stop("fp.stab.var should be a numeric")}
   if(length(fp.dim)!=4 & length(fp.dim)!=3){stop("number of dimension must be either 3 or 4")}
-  if(is.numeric(fp.stab.var)) fp.stab.var  <- array(fp.stab.var,dim=c(fp.nx,fp.ny,fp.nz,fp.n))
   if(length(fp.dim)==3){ dim(fp.data.array) <- fp.dim <- c(fp.nx,fp.ny,fp.nz,fp.n)}
   if(is.null(fp.mask.size)) fp.mask.size <- c(fp.nx,fp.ny)
   fp.mask.size[1] <- ifelse(fp.mask.size[1]>fp.nx,fp.nx,fp.mask.size[1])
@@ -75,33 +75,36 @@ fp.proc="bonferroni"
   #matrix of all the 3D coordinates at column indexes of fp.data.matrix corresponds to row indexes in fp.data.coord
   fp.data.coord       <- cbind(x=rep(1:fp.nx,len=fp.nx*fp.ny*fp.nz),y=rep(rep(1:fp.ny,each=fp.nx),len=fp.nx*fp.ny*fp.nz),z=rep(rep(1:fp.nz,each=fp.ny*fp.nx),len=fp.nx*fp.ny*fp.nz))
   fp.data.matrix      <- t(apply(fp.data.array,length(fp.dim),c))
-  fp.stab.var         <- t(apply(fp.stab.var,length(fp.dim),c))
-  fp.data.matrix.norm <- fp.data.matrix/sqrt(fp.stab.var)
 
   #eliminates the NA time-sequence from the dataset
   fp.idx.na           <- which(apply(fp.data.matrix,2,function(fp.x) any(is.na(fp.x))))
   fp.idxtovisit       <- 1:(fp.nx*fp.ny)
   if(length(fp.idx.na)>0) fp.idxtovisit <- fp.idxtovisit[-fp.idx.na]
   fp.data.matrix      <- fp.data.matrix[,fp.idxtovisit]
-  fp.stab.var         <-   fp.stab.var[,fp.idxtovisit] 
-  fp.data.matrix.norm <- fp.data.matrix.norm[,fp.idxtovisit]
   fp.data.coord       <- fp.data.coord[fp.idxtovisit,]
-
   #creates the function fp.fctDenoiseVoxel and initialises parameters that will not change until the end of the analysis
-  fp.DenoiseVoxel     <- mkFCTdenoiseVoxel(fp.data.coord,fp.data.matrix,fp.data.matrix.norm,fp.stab.var,fp.depth,fp.alpha,fp.mask.size,fp.mask.auto,fp.mask.step,fp.proc)
+  fp.DenoiseVoxel     <- mkFCTdenoiseVoxel(fp.data.coord,fp.data.matrix,fp.stab.var,fp.depth,fp.alpha,fp.mask.size,fp.mask.auto,fp.mask.step,fp.proc)
+  
+  #for each pixel x time to visit do
+#   fp.res.visited  <- lapply(1:length(fp.idxtovisit),fp.DenoiseVoxel)
+  fp.cl           <- makeCluster(getOption("cl.cores",fp.nproc))
+  fp.lidxtovisit  <- length(fp.idxtovisit)
+  clusterExport(fp.cl, varlist=list("MultiTestH0"))  
+  fp.res.visited  <- parLapply(fp.cl,1:length(fp.idxtovisit),get("fp.DenoiseVoxel"))
+  stopCluster(fp.cl)
+    
   #creates a list of size number of pixels x time, where the results will be stored
-  fp.res.list         <- vector("list",fp.nx*fp.ny)
-  #for each pixel x time do
-  fp.prog             <- follow_progress()
-  fp.denois.array     <- array(NA,dim=dim(fp.data.array))
-  for(fp.iterator in 1:length(fp.idxtovisit)){
+  fp.res.list      <- vector("list",fp.nx*fp.ny)
+  fp.denois.array  <- array(NA,dim=dim(fp.data.array)) 
+  
+  for(fp.iterator in 1:fp.lidxtovisit){
     fp.idx.pix                                      <- fp.idxtovisit[fp.iterator]
     fp.xyz                                          <- fp.data.coord[fp.iterator,]
     #creates the function fp.fctDenoise and initialises the parameters 
-    fp.res.list[[fp.idx.pix]]                       <- fp.DenoiseVoxel(fp.iterator)
+    fp.res.list[[fp.idx.pix]]                       <- fp.res.visited[[fp.iterator]]
     fp.denois.array[fp.xyz[1],fp.xyz[2],fp.xyz[3],] <- fp.res.list[[fp.idx.pix]]$Ix
-    fp.prog                     <- follow_progress(fp.idx.curr=fp.iterator,fp.max.iter=length(fp.idxtovisit),fp.prog=fp.prog)
     }
+   
   if(fp.nz==1) fp.denois.array <- array(fp.denois.array,dim=c(fp.nx,fp.ny,fp.n))
   list(details=fp.res.list,denois3D=fp.denois.array)
   ### returns a list containing:
@@ -122,8 +125,9 @@ fp.proc="bonferroni"
 # sro2          <- (16.4)^2
 # #dataset's variance
 # FT_varhat     <- G*adu340_4small+G^2*sro2
+# FT            <- FT/sqrt(FT_varhat)
 # #launches the denoising step on the dataset with a statistical level of 5%
-# denoisres     <- callDenoiseVoxel(adu340_4small,FT_varhat)
+# denoisres     <- callDenoiseVoxel(adu340_4small,1,fp.nproc=2)
 # #computes the average over time for each pixelxtime before denoising
 # avg_before    <- apply(adu340_4small,1:2,mean)
 # #computes the average over time for each pixelxtime after denoising

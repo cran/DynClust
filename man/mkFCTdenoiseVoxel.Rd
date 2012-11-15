@@ -5,15 +5,14 @@
 leaving out of the denoising process the pixels x time at indexes fp.idx.pix.
 This function is used to initialise the constant variables
 when the function 'callDenoiseVoxel' is called }
-\usage{mkFCTdenoiseVoxel(fp.data.coord, fp.data.matrix, fp.data.matrix.norm, 
-    fp.stab.var, fp.depth = 1, fp.alpha = 0.05, fp.mask.size = NULL, 
-    fp.mask.auto = F, fp.mask.step = 50, fp.proc = "bonferroni")}
+\usage{mkFCTdenoiseVoxel(fp.data.coord, fp.data.matrix, fp.stab.var, 
+    fp.depth = 1, fp.alpha = 0.05, fp.mask.size = NULL, fp.mask.auto = F, 
+    fp.mask.step = 50, fp.proc = "bonferroni")}
 \arguments{
   \item{fp.data.coord}{a matrix containing all the pixel x time's (x,y) coordinates
 with x in the first column and y in the second }
   \item{fp.data.matrix}{a matrix of pixels x time, each row corresponding to a timepoint and each column to a pixel}
-  \item{fp.data.matrix.norm}{a matrix of normalized pixels x time, each row corresponding to a timepoint and each column to a pixel }
-  \item{fp.stab.var}{a numeric or array indicating the variance of the dataset}
+  \item{fp.stab.var}{a numeric indicating the variance of the dataset}
   \item{fp.depth}{a numeric indicating the depth of a voxel}
   \item{fp.alpha}{a numeric value indicating the level of the statistical multitest H0}
   \item{fp.mask.size}{a vector indicating the size (in the x and y dimension) of a circular region defined around the current pixel used to search for neighbours

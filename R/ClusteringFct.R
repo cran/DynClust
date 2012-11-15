@@ -50,12 +50,11 @@ fp.proc="bonferroni"
     #continues the clustering updating at each step the list of pixel x time to clust, and choosing the next pixel x time to clust
     fp.res.clust  <- fp.ClusteringInnerFct(fp.res.clust$pixtoclust[1],fp.res.clust$lastchange,fp.res.clust$clusters,fp.res.clust$pixtoclust)
   }
-  
   #sorts the cluster by their neighboorhood size in the decreasing order
   fp.order                      <- order(sapply(fp.res.clust$clusters$lpix,length),decreasing=T)
   fp.res.clust$clusters$lpix    <- lapply(fp.order,function(fp.idx){fp.res.clust$clusters$lpix[[fp.idx]]}) 
   fp.res.clust$clusters$Ic      <- fp.res.clust$clusters$Ic[,fp.order,drop=F]
-  fp.res.clust$clusters$varc    <- fp.res.clust$clusters$varc[,fp.order,drop=F]
+  fp.res.clust$clusters$varc    <- fp.res.clust$clusters$varc[fp.order,drop=F]
   
   fp.dim              <- dim(fp.res.listdenois$denois3D)
   fp.nx               <- fp.dim[1]
@@ -75,7 +74,7 @@ fp.proc="bonferroni"
     fp.xyz                                                <- fp.data.coord[fp.res.clust$clusters$lpix[[fp.ii]],,drop=F]
     for(fp.subi in 1:nrow(fp.xyz)){
       fp.clust.array[fp.xyz[fp.subi,1],fp.xyz[fp.subi,2],fp.xyz[fp.subi,3],]  <- fp.res.clust$clusters$Ic[,fp.ii]
-      fp.clust.array.var[fp.xyz[fp.subi,1],fp.xyz[,2],fp.xyz[fp.subi,3],]     <- fp.res.clust$clusters$varc[,fp.ii]
+      fp.clust.array.var[fp.xyz[fp.subi,1],fp.xyz[,2],fp.xyz[fp.subi,3],]     <- fp.res.clust$clusters$varc[fp.ii]
       fp.img.clust[fp.xyz[fp.subi,1],fp.xyz[fp.subi,2],fp.xyz[fp.subi,3]]     <- fp.ii}}
   
   if(fp.nz==1){
@@ -102,8 +101,9 @@ fp.proc="bonferroni"
 # sro2          <- (16.4)^2
 # #dataset's variance
 # FT_varhat     <- G*adu340_4small+G^2*sro2
+# FT            <- FT/sqrt(FT_varhat)
 # #launches the denoising step on the dataset with a statistical level of 5%
-# denoisres     <- callDenoiseVoxel(adu340_4small,FT_varhat)
+# denoisres     <- callDenoiseVoxel(adu340_4small,1,fp.nproc=2)
 # #launches the clustering step on the dataset with a statistical level of 5%
 # clustres      <- ClusteringFct(denoisres)
 # x11()

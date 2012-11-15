@@ -11,10 +11,8 @@ fp.data.coord,
 ### with x in the first column and y in the second 
 fp.data.matrix, 
 ### a matrix of pixels x time, each row corresponding to a timepoint and each column to a pixel
-fp.data.matrix.norm, 
-### a matrix of normalized pixels x time, each row corresponding to a timepoint and each column to a pixel 
 fp.stab.var, 
-### a numeric or array indicating the variance of the dataset
+### a numeric indicating the variance of the dataset
 fp.depth=1,
 ### a numeric indicating the depth of a voxel
 fp.alpha=.05,       
@@ -42,20 +40,20 @@ fp.proc="bonferroni"
   fp.max.neighb   <- sum(fp.cercle.size)
   #we want to find the minimum size of a mask containing the most neighbours possible
   fp.goon         <- T
-  fp.neighb       <- c() 
+  fp.neighb       <- c()
   while(length(fp.neighb)<fp.max.neighb & fp.goon == T){
     #sets the x limits of the mask, vector of TRUE/FALSE indicated whether or not x is inside the dimension 1 of the mask
     fp.xlim         <- abs(fp.data.coord[,1]-fp.data.coord[fp.idx.pix,1])<=fp.mask.size[1]
     #sets the y limits of the mask, vector of TRUE/FALSE indicated whether or not y is inside the dimension 1 of the mask
     fp.ylim         <- abs(fp.data.coord[,2]-fp.data.coord[fp.idx.pix,2])<=fp.mask.size[2]
     #gets the indexes of the coordinates inside the mask
-    fp.limits                           <- fp.xlim & fp.ylim
+    fp.limits              <- fp.xlim & fp.ylim
     fp.limits[fp.neighb]   <- F        
-    fp.mask                             <- which(fp.limits)
+    fp.mask                <- which(fp.limits)
     #substract the signal at index fp.idx.pix from the raw data matrix (for pixels x time inside the mask)
-    fp.diff.matrix  <- fp.data.matrix.norm[,fp.mask]-fp.data.matrix.norm[,fp.idx.pix]
+    fp.diff.matrix  <- fp.data.matrix[,fp.mask]-fp.data.matrix[,fp.idx.pix]
     #get the indexes of fp.idx.pix's neighboors
-    fp.neighb       <- c(fp.neighb,fp.mask[MultiTestH0(fp.diff.matrix,2,fp.alpha,fp.proc)])
+    fp.neighb       <- c(fp.neighb,fp.mask[MultiTestH0(fp.diff.matrix,2*fp.stab.var,fp.alpha,fp.proc)])
     if(all(fp.mask.size==c(max(fp.data.coord[,1]),max(fp.data.coord[,2])))){fp.goon <- F}
     if(fp.mask.auto==F){fp.goon <- F}
     fp.mask.size[1] <- ifelse(fp.mask.size[1]+fp.mask.step<=max(fp.data.coord[,1]),fp.mask.size[1]+fp.mask.step,max(fp.data.coord[,1]))
@@ -75,7 +73,7 @@ fp.proc="bonferroni"
   #computes the signal Iw of the crown at step 1. fp.Iw is a matrix where Iw will be stored at each step of the algorithm (row=Iw,col=steps)
   fp.Iw           <- fp.data.matrix[,fp.neighb[1]]
   #computes the variance varw of the signal of the crown at step 1. fp.varw is a vector where varw will be stored at each step of the algorithm
-  fp.varw         <- fp.stab.var[,fp.neighb[1]]
+  fp.varw         <- fp.stab.var
   #eliminates pixel x time x from the neighboors list
   fp.neighb       <- fp.neighb[-1]
   #creates Vx, at step 1, Vx is empty. fp.V is a list where Vx will be stored at each step of the algorithm
@@ -83,7 +81,7 @@ fp.proc="bonferroni"
   #creates the signal Iv of Vx, at step 1. fp.Iv is a matrix where Iv will be stored at each step of the algorithm (row=Iw,col=steps)
   fp.Iv           <- rep(NA,nrow(fp.data.matrix)) 
   #creates the variance varv of the signal of Vx, at step 1. fp.varv will be a matrix (time x step) where varv will be stored at each step of the algorithm
-  fp.varv         <- rep(NA,nrow(fp.data.matrix)) 
+  fp.varv         <- c(NA) 
   #starts at step 2 (step 1 is achieved)
   fp.myindex      <- 2
   #while there are still neighboors inside the list, and crowns to search into do
@@ -95,25 +93,25 @@ fp.proc="bonferroni"
     #computes the signal Iv, average of the signals of pixels x time in Vx at step fp.myindex. Include it in the storage matrix  
     fp.Iv               <- cbind(fp.Iv,rowMeans(sapply(fp.V[[fp.myindex]],function(fp.idx) fp.data.matrix[,fp.idx])))
     #computes the variance varv, variance divided by the number of pixels x time in Vx at step fp.myindex. Include it in the storage vector 
-    fp.varv             <- cbind(fp.varv,rowMeans(sapply(fp.V[[fp.myindex]],function(fp.idx) fp.stab.var[,fp.idx]))/length(fp.V[[fp.myindex]]))    
+    fp.varv             <- c(fp.varv,fp.stab.var/length(fp.V[[fp.myindex]]))    
     #get the neighboors contained in the next crown
     fp.W[[fp.myindex]]  <- fp.neighb[1:fp.limits]
     #computes the signal Iw, average of the signals of pixels x time in Wx at step fp.myindex. Include it in the storage matrix  
     fp.Iw               <- cbind(fp.Iw,rowMeans(sapply(fp.W[[fp.myindex]],function(fp.idx) fp.data.matrix[,fp.idx])))
     #computes the variance varw, variance divided by the number of pixels x time in Wx at step fp.myindex. Include it in the storage vector 
-    fp.varw             <- cbind(fp.varw,rowMeans(sapply(fp.W[[fp.myindex]],function(fp.idx) fp.stab.var[,fp.idx]))/length(fp.W[[fp.myindex]]))   
+    fp.varw             <- c(fp.varw,fp.stab.var/length(fp.W[[fp.myindex]]))   
     #eliminates the included neighboors from the list of available neighboors
     fp.neighb           <- fp.neighb[-(1:fp.limits)]
     #tests the coherence between the signal in the crown at fp.myindex with all the previous Vx created (from step 2 since Vx={} at step 1), fp.alpha is divided by the number of Vx used at each step
-    fp.testcoh          <- MultiTestH0(fp.Iv[,2:fp.myindex]-fp.Iw[,fp.myindex],fp.varv[,2:fp.myindex]+fp.varw[,fp.myindex],fp.alpha/(fp.myindex-1),fp.proc)
+    fp.testcoh          <- MultiTestH0(fp.Iv[,2:fp.myindex]-fp.Iw[,fp.myindex],fp.varv[2:fp.myindex]+fp.varw[fp.myindex],fp.alpha/(fp.myindex-1),fp.proc)
     #if all the Vx are not coherent with the current Wx then the denoising stops and returns Vx and Iv at index fp.myindex 
-    if(length(fp.testcoh)!=length(2:fp.myindex)) return(list(Vx=unique(fp.V[[fp.myindex]]),Ix=fp.Iv[,fp.myindex],varx=fp.varv[,fp.myindex]))
+    if(length(fp.testcoh)!=length(2:fp.myindex)) return(list(Vx=unique(fp.V[[fp.myindex]]),Ix=fp.Iv[,fp.myindex],varx=fp.varv[fp.myindex]))
     #if there are no neighboors available then the denoising stops and returns Vx and Iv at index fp.myindex 
-    if(fp.limits==0)  return(list(Vx=unique(fp.V[[fp.myindex]]),Ix=fp.Iv[,fp.myindex],varx=fp.varv[,fp.myindex]))
+    if(fp.limits==0)  return(list(Vx=unique(fp.V[[fp.myindex]]),Ix=fp.Iv[,fp.myindex],varx=fp.varv[fp.myindex]))
     #next step
     fp.myindex          <- fp.myindex+1}
   #returns Vx and Iv at index fp.myindex 
-  return(list(Vx=unique(fp.V[[length(fp.W)]]),Ix=fp.Iv[,length(fp.W)],varx=fp.varv[,length(fp.W)]))}
+  return(list(Vx=unique(fp.V[[length(fp.W)]]),Ix=fp.Iv[,length(fp.W)],varx=fp.varv[length(fp.W)]))}
   ### returns a list containing:
   ### 'Vx' a vector containing all the indexes of the denoised pixel's neighboors
   ### 'Ix' a vector containing the denoised signal
