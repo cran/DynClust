@@ -1,21 +1,26 @@
+\docType{package}
 \name{DynClust-package}
 \alias{DynClust-package}
-\docType{package}
-\title{non-parametric denoising and clustering method of noisy images both indexed by time and space}
-\description{Two-stage method for the denoising and clustering of stack of noisy images acquired over time, based on the simple assumption that a finite  sequence of noisy images both indexed by time and space is composed of noisy versions of only a limited amount of dynamic features. The aim of the method is first to denoise signals using both the spatial and temporal information contained in the data, and then cluster the denoised signals depending on their dynamic features. Two signals are considered to have similar features if their difference does not significantly deviate from zero. By comparing difference signals, no assumption is therefore made on the shape of the theoretical signals. In order for the method to be applicable to experimental data, the data should be normally distributed (or at least follow a symmetric distribution) with a constant variance. Also the number of observations n must be of the form n=d^2. Moreover, the method is based on the implicit assumption that, for a given data set, almost each dynamic feature is present in two or more pixels. The use of the method can be time-consuming depending on the size of the data-array (see arguments fp.mask.size, and fp.nproc of the callDenoiseVoxel function in order to reduce the computation time).}
-\details{
-\tabular{ll}{Package: \tab DynClust\cr
-Type: \tab Package\cr
-Title: \tab non-parametric denoising and clustering method of noisy images both indexed by time and space\cr
-Version: \tab 2.2\cr
-Date: \tab 2012-11-15\cr
-Author: \tab Tiffany Lieury,Christophe Pouzat, Yves Rozenholc\cr
-Maintainer: \tab Tiffany Lieury <lieuryt-dynclust@yahoo.fr>\cr
-Depends: \tab R (>= 2.15), parallel\cr
-License: \tab GPL (>=2)\cr}
+\title{Denoising and clustering for dynamical image sequence (2D or 3D)+T}
+\description{
+DynClust is a two-stage procedure for the denoising and
+clustering of stack of noisy images acquired over time.
+Clustering only assumes that the data contain an unknown
+but small number of dynamic features. The method first
+denoises the signals using local spatial and full temporal
+information. The clustering step uses the previous output
+to aggregate voxels based on the knowledge of their spatial
+neighborhood. Both steps use a single keytool based on the
+statistical comparison of the difference of two signals
+with the null signal. No assumption is therefore required
+on the shape of the signals. The data are assumed to be
+normally distributed (or at least follow a symmetric
+distribution) with a known constant variance. Working
+pixelwise, the method can be time-consuming depending on
+the size of the data-array but harnesses the power of
+multicore cpus.
 }
-\author{Tiffany Lieury,Christophe Pouzat, Yves Rozenholc}
-
-\keyword{ package }
-
+\author{
+Tiffany Lieury, Christophe Pouzat, Yves Rozenholc
+}
 

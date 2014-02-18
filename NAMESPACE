@@ -1,5 +1,6 @@
-useDynLib(DynClust,
-MultiTestH0_ccall)
-# Import all packages listed as Imports or Depends
- import(parallel)
-exportPattern("^[[:alpha:]]+")
+export(GetClusteringResults)
+export(GetDenoisingResults)
+export(MultiTestH0)
+export(RunClustering)
+export(RunDenoising)
+import(parallel)

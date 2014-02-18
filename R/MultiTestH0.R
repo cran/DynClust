@@ -1,31 +1,100 @@
+
+#' @name MultiTestH0
+  #' @title Statistical test of zero mean for dynamics
+  #' @description MultiTestH0 tests if each column vectors of a matrix seen as a noisy dynamic is of zero mean (\eqn{H_0}) or not. The multiple statistical test assumes known variance and is based on a multiple \eqn{\chi^2} test.
+  #'
+  #' @param proj.matrix a matrix whose colummns are tested to have zero mean or not.
+  #' @param data.var a numeric providing the known variance
+  #' @param thrs a numeric vector of thresholds specified as the \eqn{1-\alpha} quantiles of the multiple test under the null on each partition. If thrs=NULL (default) return the global p-value which is the minimum of all p-values obtained on each partition.
+  #' @return If thrs is provide returns a Boolean vector with length the number of columns of proj.matrix. Element j is TRUE if the null hypothesis (no difference with the null vector) is accepted for column j of proj.matrix. Otherwise, return one p-value per column.
+  #' @references Baraud Y., Huet S., Laurent B. \emph{Ann. Stat.} (2003) Durot C., Rozenholc Y. \emph{Methods Math. Stat.} (2006)
+  #' @author Tiffany Lieury, Christophe Pouzat, Yves Rozenholc
+  #' @export
+  MultiTestH0 <-
+      function
+  ### 'MultiTestH0' tests if the vector or matrix 'proj.matrix' given as an argument is significantly different from a null vector or matrix at a level alpha.
+  (
+      proj.matrix,   
+  ### a matrix of signals to be tested with as many columns as signals to test
+      data.var,
+  ### a numeric indicating the variance
+      thrs=NULL
+  ### a numeric vector indicating the thresholds (for each partitions) of the statistical multitest H0
+  ### if thrs=NULL return the global p-value which is the minimum of all p-values obtained on each partitions
+      ){
+#' MultiTestH0 tests if the column vectors of matrix 'proj.matrix' are significantly different from a null vector using multiple \eqn{\chi^2} tests.
+#'
+#' the time-homogeneity is accepted at based on the multitest of \eqn{H_0}, the difference
+#' is the null vector against \eqn{H_1}, the difference is not null.
+#'
+#' @param proj.matrix a matrix of signals to be tested with as many columns as signals to test.
+#' @param data.var a numeric indicating the variance
+#' @param thrs a numeric vector of thresholds specified as the \eqn{1-\alpha} quantiles of the multiple test under the null on each partition. If thrs=NULL (default) return the global p-value which is the minimum of all p-values obtained on each partition.
+#' @return A Boolean vector with length the number of columns of proj.matrix. Element j is TRUE if the null hypothesis (no difference with the null vector) is accepted for column j of proj.matrix.
+#' @references Baraud, Huet, Laurent (2003) Ann. Stat.; Durot, Rozenholc (2006) Methods Math. Stat.
+#' @author Tiffany Lieury, Christophe Pouzat, Yves Rozenholc
+#' @export
 MultiTestH0 <-
-function
-### 'MultiTestH0' tests if the vector or matrix 'fp.proj.matrix' given as an argument is significantly different from a null vector or matrix at a level alpha.
+    function
+### 'MultiTestH0' tests if the vector or matrix 'proj.matrix' given as an argument is significantly different from a null vector or matrix at a level alpha.
 (
-fp.proj.matrix,   
+    proj.matrix,   
 ### a matrix of signals to be tested with as many columns as signals to test
-fp.var,     
-### a numeric indicating the variance of the dataset
-fp.alpha=.05,       
-### a numeric value indicating the level of the statistical multitest H0
-fp.proc="bonferroni"         
-### a character either "bonferroni" or "fdr" indicating which method to use for the multitest H0
-### "fdr" method is not implemented yet
-){
-  #if fp.proj.matrix is a vector, then it will be reformated as a matrix with one column
-  if(is.vector(fp.proj.matrix)) fp.proj.matrix  <- matrix(fp.proj.matrix,ncol=1)
-  if(is.matrix(fp.var)) fp.proj.matrix  <- matrix(fp.proj.matrix,ncol=1)
-  fp.proj.matrix[which(!is.finite(fp.proj.matrix))]  <- 0   
-  #then normalize the data using this formula
-  fp.proj.matrix  <- t(t(fp.proj.matrix)/sqrt(fp.var))
-  fp.NCOL         <- ncol(fp.proj.matrix)
-  fp.NROW         <- nrow(fp.proj.matrix)
-  #sets the number of tests
-  fp.NTEST        <- log2(fp.NROW+2)-1
-  fp.proj.matrix  <-
-.C("MultiTestH0_ccall",as.double(as.vector(fp.proj.matrix)),as.integer(fp.NROW),as.integer(fp.NCOL),as.integer(fp.NTEST),as.double(fp.alpha),as.integer(rep(0,ncol(fp.proj.matrix))),PACKAGE="DynClust")
-  fp.proj.matrix  <- which(fp.proj.matrix[[6]]==0)
-  return(fp.proj.matrix)
-  ### returns TRUE if the test was not significant, FALSE if H1 is true (the mean is centered on 0) at a level alpha
-  ### when 'fp.proj.matrix' is a matrix the function returns a vector of boolean values. 
+    data.var,
+### a numeric indicating the variance
+    thrs=NULL
+### a numeric vector indicating the thresholds (for each partitions) of the statistical multitest H0
+### if thrs=NULL return the global p-value which is the minimum of all p-values obtained on each partitions
+    ){
+
+    MultiTestOneColumn <- function(i){
+                X = proj.matrix[,i]
+                test <- TRUE 
+                pvalue = 1
+                k <- 0
+                while(test && (2^(k+1) <= length(X)+1)) {
+                    k <- k+1
+                    norm2.proj = sum(X[2^(k-1):(2^k-1)]^2)/data.var[i]
+                    if (is.null(thrs)) pvalue <- min(pvalue,1-pchisq(norm2.proj,df=2^k-2^(k-1)))
+                    else test <- (norm2.proj<=thrs[k])
+                        }
+                if (is.null(thrs)) return(pvalue) else return(test)
+    }   
+    
+    if (is.vector(proj.matrix)) proj.matrix=as.matrix(proj.matrix)
+        
+    if (length(data.var)==1) data.var=rep(data.var,dim(proj.matrix)[2])
+ 
+                                        # test return a vector of length ncol(proj.matrix)
+                                        # test[k] is TRUE if proj.matrix[,k] is statistically of zero mean
+                                        # or if thrs is NULL return the p-values
+    test <- sapply(1:dim(proj.matrix)[2],MultiTestOneColumn)
+
+    test
 }
+  
+      MultiTestOneColumn <- function(i){
+                  X = proj.matrix[,i]
+                  test <- TRUE 
+                  pvalue = 1
+                  k <- 0
+                  while(test && (2^(k+1) <= length(X)+1)) {
+                      k <- k+1
+                      norm2.proj = sum(X[2^(k-1):(2^k-1)]^2)/data.var[i]
+                      if (is.null(thrs)) pvalue <- min(pvalue,1-pchisq(norm2.proj,df=2^k-2^(k-1)))
+                      else test <- (norm2.proj<=thrs[k])
+                          }
+                  if (is.null(thrs)) return(pvalue) else return(test)
+      }   
+      
+      if (is.vector(proj.matrix)) proj.matrix=as.matrix(proj.matrix)
+          
+      if (length(data.var)==1) data.var=rep(data.var,dim(proj.matrix)[2])
+   
+                                          # test return a vector of length ncol(proj.matrix)
+                                          # test[k] is TRUE if proj.matrix[,k] is statistically of zero mean
+                                          # or if thrs is NULL return the p-values
+      test <- sapply(1:dim(proj.matrix)[2],MultiTestOneColumn)
+  
+      test
+  }

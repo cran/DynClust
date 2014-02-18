@@ -1,22 +1,39 @@
 \name{MultiTestH0}
 \alias{MultiTestH0}
-\title{MultiTestH0}
-\description{'MultiTestH0' tests if the vector or matrix 'fp.proj.matrix' given as an argument is significantly different from a null vector or matrix at a level alpha.}
-\usage{MultiTestH0(fp.proj.matrix, fp.var, fp.alpha = 0.05, fp.proc = "bonferroni")}
-\arguments{
-  \item{fp.proj.matrix}{a matrix of signals to be tested with as many columns as signals to test}
-  \item{fp.var}{a numeric indicating the variance of the dataset}
-  \item{fp.alpha}{a numeric value indicating the level of the statistical multitest H0}
-  \item{fp.proc}{a character either "bonferroni" or "fdr" indicating which method to use for the multitest H0
-"fdr" method is not implemented yet}
+\title{Statistical test of zero mean for dynamics}
+\usage{
+MultiTestH0(proj.matrix, data.var, thrs = NULL)
 }
+\arguments{
+  \item{proj.matrix}{a matrix whose colummns are tested to
+  have zero mean or not.}
 
-\value{returns TRUE if the test was not significant, FALSE if H1 is true (the mean is centered on 0) at a level alpha
-when 'fp.proj.matrix' is a matrix the function returns a vector of boolean values. }
+  \item{data.var}{a numeric providing the known variance}
 
-\author{Tiffany Lieury,Christophe Pouzat, Yves Rozenholc}
-
-
-
-
+  \item{thrs}{a numeric vector of thresholds specified as
+  the \eqn{1-\alpha} quantiles of the multiple test under
+  the null on each partition. If thrs=NULL (default) return
+  the global p-value which is the minimum of all p-values
+  obtained on each partition.}
+}
+\value{
+If thrs is provide returns a Boolean vector with length the
+number of columns of proj.matrix. Element j is TRUE if the
+null hypothesis (no difference with the null vector) is
+accepted for column j of proj.matrix. Otherwise, return one
+p-value per column.
+}
+\description{
+MultiTestH0 tests if each column vectors of a matrix seen
+as a noisy dynamic is of zero mean (\eqn{H_0}) or not. The
+multiple statistical test assumes known variance and is
+based on a multiple \eqn{\chi^2} test.
+}
+\author{
+Tiffany Lieury, Christophe Pouzat, Yves Rozenholc
+}
+\references{
+Baraud Y., Huet S., Laurent B. \emph{Ann. Stat.} (2003)
+Durot C., Rozenholc Y. \emph{Methods Math. Stat.} (2006)
+}
 
