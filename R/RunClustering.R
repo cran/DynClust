@@ -102,7 +102,7 @@ RunClustering <- function(
         i = 0; i.max = 1000
         continue = TRUE
         ## repeat until center does not change anymore
-        while (continue) {
+        while (continue && (i<=i.max)) {
             i = i+1
             ## compute the new cluster center
             center.new = rowMeans(data.proj[,cluster,drop=FALSE])
@@ -111,7 +111,7 @@ RunClustering <- function(
             ## the new cluster
             cluster = children[DoFDR(pvalues)]
             ## check if the cluster center has changed or not 
-            continue = (mean((center.new-center)^2)>1e-4)&&(i<=i.max)
+            continue = (length(cluster)>0)&&(mean((center.new-center)^2)>1e-4)
             ## update
             center = center.new                     
         }
