@@ -23,8 +23,6 @@ GetDenoisingResults <- function
  ## a list containing the results of the RunDenoising procedure
  ){
     
-    data.std = sqrt(res.listdenois$var)
-    
     ## build the denoised kD+T array
     for (i in 1:length(res.listdenois$info.den)) {
         
@@ -37,7 +35,7 @@ GetDenoisingResults <- function
         mil = tmp$Cx
         
         ## replace the dynamics in data.array by its denoised version 
-        eval(parse(text=paste('data.array[',paste(mil,collapse=','),',] <- tmp$Ix*data.std',sep='')))
+        eval(parse(text=paste('data.array[',paste(mil,collapse=','),',] <- tmp$Ix',sep='')))
     }
     
     ## return the kD+T array of the denoised versions

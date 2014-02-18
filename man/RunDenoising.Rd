@@ -3,7 +3,7 @@
 \title{Denoising step of a dynamical image sequence}
 \usage{
 RunDenoising(data.array, data.var = 1, depth = 1, alpha = 0.05,
-  mask.size = NA, nproc = 1, sqrt.stab = FALSE, enhStart = 1)
+  mask.size = NA, nproc = 1, enhStart = ifelse(is.null(var), 2, 1))
 }
 \arguments{
   \item{data.array}{a (2D or 3D)+T array containing the
@@ -11,7 +11,9 @@ RunDenoising(data.array, data.var = 1, depth = 1, alpha = 0.05,
   dimension is the time.}
 
   \item{data.var}{a numeric indicating the variance of the
-  dataset.}
+  dataset (default 1). If set to NULL, the variance is
+  computed using a baseline image. See \code{enhStart}
+  parameter.}
 
   \item{depth}{a numeric indicating the depth of a voxel.}
 
@@ -31,13 +33,10 @@ RunDenoising(data.array, data.var = 1, depth = 1, alpha = 0.05,
   \item{nproc}{a numeric value indicating the number of
   processors used for parallel computation.}
 
-  \item{sqrt.stab}{a boolean indicating if square root of
-  the sequence should be used to stabilize the variance
-  (default FALSE).}
-
   \item{enhStart}{an integer, if larger than 1, a baseline
   is computed as a median image obtain from time indexes
-  between 1 and enhStart-1.}
+  between 1 and enhStart-1. Default value
+  \code{ifelse(is.null(var),2,1)}.}
 }
 \value{
 a list containing: \itemize{ \item \code{info.den}, a list

@@ -51,7 +51,7 @@ clustering procedure \code{RunClustering}
     ## launches the clustering step on the dataset with a statistical level of 5\%
     FT.clust.tmp  <- RunClustering(FT,FT.den.tmp,nproc=2)
     n.cluster <- length(FT.clust.tmp$clusters)
-    print(paste(n.cluster,'clusters using variance set to 1 corresponding to nominal value'))
+    print(paste(n.cluster,'clusters using variance set to',sqrt(FT.den.tmp$var),'^2'))
     
     ## get the classified version of the data array and the map of the clusters
     FT.clust.res <- GetClusteringResults(FT,FT.den.tmp,FT.clust.tmp)

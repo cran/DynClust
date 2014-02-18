@@ -95,7 +95,7 @@ RunClustering <- function(
     RobustMean = function(children) {
         ## Build a robust 1-mean for a children list
     
-        ## Initialize with the dynamic average of all children
+        ## Initialize with the dynamic average over all children
         child.proj = data.proj[,children,drop=FALSE]
         cluster = children
         center = Inf
@@ -253,7 +253,6 @@ RunClustering <- function(
     ## pseudo attachment of info.den, data.proj and var results of the callDenoiseVoixel procedure
     info.den = denois$info.den
     data.proj = denois$data.proj
-    var = denois$var
     rm(denois)
     ## if(getRversion() >= "2.15.1")  utils::globalVariables(c("info.den", "data.proj", "var"))
     ## attach(denois,warn.conflicts=F) 
@@ -279,7 +278,7 @@ RunClustering <- function(
     ## Main loop of the clusterization procedure
     i = 0
     actual.min.size = Inf
-    while ((i<nvox^2)&&any(to.cluster)){
+    while (any(to.cluster)){
         i = i+1
         id.tocluster = which(to.cluster)
         ## print(paste('NOMBRE DE VOXELS A CLUSTERISER:',length(id.tocluster),'--- current.min.size:',actual.min.size))
@@ -307,6 +306,7 @@ RunClustering <- function(
     ## compute the cluster centers
     for (i in 1:length(cluster.list)) 
         cluster.list[[i]]$center=rowMeans(data.array[,cluster.list[[i]]$cluster,drop=F])
+    
     
     ## extract centers and clusters
     centers = sapply(cluster.list,function(x) x$center)

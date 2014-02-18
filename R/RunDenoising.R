@@ -19,7 +19,8 @@
 #' 
 #' @param data.array a (2D or 3D)+T array containing the dynamic
 #' sequence of images (the dataset). The last dimension is the time.
-#' @param data.var a numeric indicating the variance of the dataset.
+#' @param data.var a numeric indicating the variance of the dataset (default 1).
+#' If set to NULL, the variance is computed using a baseline image. See \code{enhStart} parameter.
 #' @param depth a numeric indicating the depth of a voxel.
 #' @param alpha a numeric value indicating the global level of the
 #' multitest.
@@ -32,10 +33,9 @@
 #' 
 #' @param nproc a numeric value indicating the number of processors
 #' used for parallel computation.
-#' @param sqrt.stab a boolean indicating if square root of the
-#' sequence should be used to stabilize the variance (default FALSE).
 #' @param enhStart an integer, if larger than 1, a baseline is
 #' computed as a median image obtain from time indexes between 1 and enhStart-1.
+#' Default value \code{ifelse(is.null(var),2,1)}.
 #4 This baseline is removed from each image of the sequence.
 #' @return a list containing:
 #' \itemize{
@@ -60,73 +60,72 @@ RunDenoising <- function(data.array,
                          alpha=.05,
                          mask.size=NA,
                          nproc=1,
-                         sqrt.stab=FALSE,
-                         enhStart=1) {
+                         enhStart=ifelse(is.null(var),2,1)) {
     
-      ## sets the sizes of the crowns
-      ## sizes increase geometrically as a serie with a0=1 and q=1.5
-      incr.size <- c(1,4,8,16,36,92,212,477) #increasing crown sizes 
-      ball.size <- cumsum(incr.size) #ball sizes
-        
-      ## data dimensions
-      dim <- dim(data.array)
-      ## number of dimensions
-      ndim <- length(dim)
-      ## special status for time
-      ntime <- dim[ndim]
-      ## spatial dimensions
-      coord <- dim[-ndim]
-      ## number of voxels
-      nvox <- prod(coord)
-      ## transforms the kD+T data set into a matrix ntime x nvox
-      data.array <- matrix(aperm(data.array,c(ndim,1:(ndim-1))),nrow=ntime,ncol=nvox)
-      ## number of partitions = number of tests = iter + 1
-      iter <- floor(log2(ntime))-1      ### partition sizes 2^(0:iter)
-      ## size of the finest partition
-      Dmax <- 2^iter
-      ## number of intervals + 1 in all partitions     
-      from = 2^(iter+1)
-      ## test thresholds with Bonferroni correction adapted to the partition number
-      thrs = qchisq(1-alpha/(iter+1),2^(0:iter))
-      
-        
-      ## mask initialization
-      if (is.na(mask.size)) {
-          p=(1000/prod(coord))^(1/length(coord))
-          mask.size = ceiling(p*coord)
-          print(paste('mask size :'))
-          print(mask.size)
-      }
-      if (is.null(mask.size)) mask.size=coord
-      
-      ## ################### TESTING FEASIBILITY #############################
-      ## tests can the data be analyzed
-      if(nproc<1) stop("nproc must be at least equal to 1")
-      if(!is.null(dim(data.var)) | length(data.var)>1) stop("data.var should be a numeric")
-      if(length(dim)<=2) stop("number of dimensions should not be smaller than 3")
-      if(!is.null(mask.size)){
-          if (any(mask.size<=1)) stop('coef of mask.size should be larger than 1')
-          mask.size <- round(mask.size)}
-      
-      ## ############# BASELINE and VARIANCE STABILIZATION       ####################
-      ## baseline removal and stabilization of the variance if possible
-      if (enhStart>1) {
-          if (sqrt.stab) # stabilization of the variance
-              data.array = sqrt(data.array)
-          if (enhStart>2) {# automatic variance computation with MAD estimator
-              baseline = apply(data.array[1:(enhStart-1),],2,median)
-              data.array = sweep(data.array,2,baseline)
-              data.var = mad(sweep(data.array[1:(enhStart-1),],2,baseline)[1:(enhStart-1),])^2
-          }
-      }
-                
-      ## ##################### DATA NORMALIZATION ##############################
-      ## standardized the data with respect to the common variance
-      if (data.var!=1) data.array = data.array/sqrt(data.var)
-    
-    keep.var = data.var
-    data.var = 1
-      
+     ## sets the sizes of the crowns
+     ## sizes increase geometrically as a serie with a0=1 and q=1.5
+     incr.size <- c(1,4,8,16,36,92,212,477) #increasing crown sizes 
+     ball.size <- cumsum(incr.size) #ball sizes
+     
+     ## data dimensions
+     dim <- dim(data.array)
+     ## number of dimensions
+     ndim <- length(dim)
+     ## special status for time
+     ntime <- dim[ndim]
+     ## spatial dimensions
+     coord <- dim[-ndim]
+     ## number of voxels
+     nvox <- prod(coord)
+     ## transforms the kD+T data set into a matrix ntime x nvox
+     data.array <- matrix(aperm(data.array,c(ndim,1:(ndim-1))),nrow=ntime,ncol=nvox)
+     ## number of partitions = number of tests = iter + 1
+     iter <- floor(log2(ntime))-1      ### partition sizes 2^(0:iter)
+     ## size of the finest partition
+     Dmax <- 2^iter
+     ## number of intervals + 1 in all partitions     
+     from = 2^(iter+1)
+     ## test thresholds with Bonferroni correction adapted to the partition number
+     thrs = qchisq(1-alpha/(iter+1),2^(0:iter))
+     
+     
+     ## mask initialization
+     if ((!is.null(mask.size))&&(is.na(mask.size))) {
+         p=(1000/prod(coord))^(1/length(coord))
+         mask.size = ceiling(p*coord)
+         print(paste('mask size :'))
+         print(mask.size)
+     }
+     if (is.null(mask.size)) mask.size=coord
+     
+     ## ################### TESTING FEASIBILITY #############################
+     ## tests can the data be analyzed
+     if(nproc<1) stop("nproc must be at least equal to 1")
+     if(!is.null(dim(data.var)) | length(data.var)>1) stop("data.var should be a numeric")
+     if(length(dim)<=2) stop("number of dimensions should not be smaller than 3")
+     if(!is.null(mask.size)){
+         if (any(mask.size<=1)) stop('coef of mask.size should be larger than 1')
+         mask.size <- round(mask.size)}
+     
+    ## ############# BASELINE and VARIANCE COMPUTATION  ####################
+     ## baseline removal and computation of the variance if needed
+     baseline = NULL
+     if (enhStart>1) {
+         baseline = apply(data.array[1:(enhStart-1),],2,median)
+         data.array = sweep(data.array,2,baseline)
+         if (is.null(data.var)||(data.var<0)) {
+             data.var <- ifelse(is.null(data.var),1,-data.var)*var(as.vector(data.array[1:(enhStart-1),]))
+             print(paste('estimated variance:',data.var))
+         } 
+     }
+     
+     ## ##################### DATA NORMALIZATION ##############################
+     ## standardized the data with respect to the common variance
+     keep.sd = sqrt(data.var)
+     if (keep.sd!=1) data.array = data.array/keep.sd
+     
+     data.var = 1
+     
         
     ## ########################### CREATING LOCAL FUNCTIONS #############################
         
@@ -138,7 +137,7 @@ RunDenoising <- function(data.array,
         num <- c(tapply(rep(1,ntime),loc,sum))
         ## storage locations 
         to <- from-1; 
-        from <-to-length(num)+1
+        from <- to-length(num)+1
         ## projections 
         data.proj[from:to,] <<- apply(data.array,2,function(col) tapply(col,loc,sum))
         ## loop from finer to thicker partitions
@@ -253,15 +252,16 @@ RunDenoising <- function(data.array,
         }
         
         ## the denoised dynamics rescaled
-        Ix = data.var*rowMeans(data.array[,neighbors.idx[1:limits],drop=F])
+        Ix = keep.sd*rowMeans(data.array[,neighbors.idx[1:limits],drop=F])
+        if (!is.null(baseline)) Ix = Ix+baseline[pix.idx]
         
         list(Lx=data.coord[neighbors.idx[1:limits],],Cx=data.coord[pix.idx,],Px=Iv[,kV],
              Ix=Ix,Vx= neighbors.idx[1:limits]) 
         
     #### returns a list containing:
-                      #### 'Vx' a vector containing all the neighbors indexes used to build the denoised dynamic
+    #### 'Vx' a vector containing all the neighbors indexes used to build the denoised dynamic
     #### 'Ix' a vector containing the denoised dynamic
-                      #### 'Px' a vector containing the denoised projection
+    #### 'Px' a vector containing the denoised projection
     #### 'Lx' a matrix containing the original coordinates of the neighbors in data.array 
     #### 'Cx' a vector containing the original coordinates of the center
     }            
@@ -285,5 +285,5 @@ RunDenoising <- function(data.array,
     ## for each voxel x time to visit do
     res.visited <- mclapply(1:nvox,buildEstimate,mc.preschedule=FALSE,mc.cores=nproc)
     
-    list(info.den=res.visited,data.proj=data.proj,var=keep.var)    
+    list(info.den=res.visited,data.proj=data.proj,var=keep.sd^2,baseline=baseline)    
 }
