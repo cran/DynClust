@@ -1,7 +1,7 @@
-5aec0a7b4fca30ba35dc53d55e0b42be *DESCRIPTION
-ddc3e78043a666ebc62b6499cd62f9ea *LICENSE
-dd02725fb22bac9e28b5a3d5a76bd8dc *NAMESPACE
-348af60d7fca44b359d254479aad56fe *R/DynClust-package.R
+20927cd7f5f2171e5773e16147e409d7 *DESCRIPTION
+ee9c0ae0ca8ad7dac01b5b90d8adc44e *LICENSE
+0b55419852ef67fe44c6f5020a10ed1b *NAMESPACE
+9ef567c6a09451bd1d51f3fc330df65b *R/DynClust-package.R
 19ce44c5ff9be46864dbdef105138585 *R/GetClusteringResults.R
 0b99972c62526610764ef4c5097ef142 *R/GetDenoisingResults.R
 ccdbcfad14804d829dc95cddc5da1fcc *R/MultiTestH0.R

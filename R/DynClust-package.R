@@ -17,4 +17,8 @@
 #' @docType package
 #' @author Tiffany Lieury, Christophe Pouzat, Yves Rozenholc
 #' @import parallel
+#' @importFrom stats median pchisq qchisq var
+#' 
+#' @encoding{utf-8}
+
 NULL
